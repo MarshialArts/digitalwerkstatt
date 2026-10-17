@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="de" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>digitalwerkstatt — Beratung | Projektleitung | Digitalisierung</title>
+  <meta name="description" content="Ingenieurskunst trifft digitale Praxis: KI-Beratung, technische Projektleitung (Automotive & UAV/C-UAS) und 3D-/Video-Digitalisierung." />
+
+  <!-- Dynamic SVG Favicon (Gold/Black 'dw' Badge) -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='46' fill='%23111113' stroke='%23D4AF37' stroke-width='6'/><text x='50' y='62' font-family='monospace' font-size='38' font-weight='bold' fill='%23F5F5F7' text-anchor='middle'>dw</text></svg>" />
+
+  <!-- Tailwind CSS (Hinweis: Für Live-Produktion idealerweise lokal bauen, siehe README) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['-apple-system', 'BlinkMacSystemFont', '"SF Pro Display"', '"Inter"', 'system-ui', 'sans-serif'],
+            mono: ['"SF Mono"', '"JetBrains Mono"', 'ui-monospace', 'monospace'],
+          },
+          colors: {
+            ios: {
+              lightBg: '#F5F5F7',
+              darkBg: '#1C1C1E',
+              black: '#111113',
+              gold: '#B89146',
+              goldBright: '#D4AF37',
+              purple: '#7C3AED'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Eigenes Stylesheet -->
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body class="min-h-screen flex flex-col selection:bg-[#D4AF37] selection:text-[#111113]">
+
+  <!-- BACKGROUND CANVAS FOR PILLAR CARD HOVER EFFECTS -->
+  <canvas id="ambientBgCanvas"></canvas>
+
+  <!-- TOP PURPLE SYSTEM PROGRESS BAR -->
+  <div id="topLoader" class="fixed top-0 left-0 right-0 h-[3px] purple-loader z-[100] opacity-0 transition-opacity duration-200 pointer-events-none"></div>
+
+  <!-- FLOATING iOS HEADER -->
+  <header class="sticky top-4 z-50 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-6xl mx-auto ios-card px-4 sm:px-6 h-16 flex items-center justify-between shadow-sm">
+      
+      <!-- BRAND LOGO WITH SLOWER DRONE SWARM ON HOVER -->
+      <button id="brandLogoBtn"
+              onmouseenter="spawnLogoDrones(event)"
+              onclick="spawnLogoDrones(event); navigateTo('home')"
+              class="flex items-center gap-3 text-left focus:outline-none group relative">
+        <div id="dwCircle" class="w-10 h-10 rounded-full bg-[#111113] dark:bg-[#F5F5F7] text-white dark:text-[#111113] flex items-center justify-center font-mono text-xs font-semibold tracking-tighter border-2 border-[#D4AF37] group-hover:scale-110 transition-transform shadow-md">
+          dw
+        </div>
+        <div>
+          <span class="font-semibold tracking-tight text-base sm:text-lg block leading-none">
+            digital<span class="text-gold font-normal">werkstatt</span>
+          </span>
+          <span class="font-mono text-[10px] text-mut tracking-wider uppercase block mt-0.5">
+            AI · Engineering · 3D
+          </span>
+        </div>
+      </button>
+
+      <!-- iOS Segmented Control Navigation -->
+      <nav class="hidden md:flex items-center gap-1 p-1 ios-pill">
+        <button onclick="navigateTo('home')" data-nav="home" class="nav-pill px-4 py-1.5 rounded-full text-xs font-medium transition-all">
+          Start
+        </button>
+        <button onclick="navigateTo('consulting')" data-nav="consulting" class="nav-pill px-4 py-1.5 rounded-full text-xs font-medium transition-all">
+          01. Beratung
+        </button>
+        <button onclick="navigateTo('projektleitung')" data-nav="projektleitung" class="nav-pill px-4 py-1.5 rounded-full text-xs font-medium transition-all">
+          02. Projektleitung
+        </button>
+        <button onclick="navigateTo('digitalisierung')" data-nav="digitalisierung" class="nav-pill px-4 py-1.5 rounded-full text-xs font-medium transition-all">
+          03. Digitalisierung
+        </button>
+        <button onclick="navigateTo('founder')" data-nav="founder" class="nav-pill px-4 py-1.5 rounded-full text-xs font-medium transition-all">
+          Profil & Kontakt
+        </button>
+      </nav>
+
+      <!-- Right Actions: Day/Night Toggle & Mobile Menu -->
+      <div class="flex items-center gap-2">
+        <button onclick="toggleTheme()" class="ios-pill px-3.5 py-1.5 flex items-center gap-2 text-xs font-mono font-medium hover:opacity-80 transition-opacity" title="Tag-/Nachtmodus wechseln">
+          <span id="themeDot" class="w-2 h-2 rounded-full bg-[#B68D40]"></span>
+          <span id="themeText">TAG</span>
+        </button>
+
+        <button onclick="toggleMobileMenu()" class="md:hidden ios-pill p-2" aria-label="Menü">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 7h16M4 12h16M4 17h16"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile Menu Sheet -->
+    <div id="mobileMenu" class="hidden md:hidden max-w-6xl mx-auto mt-2 ios-card p-4 space-y-1.5 shadow-xl">
+      <button onclick="navigateTo('home'); toggleMobileMenu()" class="w-full text-left px-4 py-2.5 rounded-2xl text-sm font-medium flex justify-between items-center hover:bg-black/5 dark:hover:bg-white/5">
+        <span>Start & Übersicht</span>
+        <span class="font-mono text-xs text-mut">00</span>
+      </button>
+      <button onclick="navigateTo('consulting'); toggleMobileMenu()" class="w-full text-left px-4 py-2.5 rounded-2xl text-sm font-medium flex justify-between items-center hover:bg-black/5 dark:hover:bg-white/5">
+        <span>Beratung (KI-Consulting)</span>
+        <span class="font-mono text-xs text-gold">01</span>
+      </button>
+      <button onclick="navigateTo('projektleitung'); toggleMobileMenu()" class="w-full text-left px-4 py-2.5 rounded-2xl text-sm font-medium flex justify-between items-center hover:bg-black/5 dark:hover:bg-white/5">
+        <span>Projektleitung (Automotive & UAV)</span>
+        <span class="font-mono text-xs text-gold">02</span>
+      </button>
+      <button onclick="navigateTo('digitalisierung'); toggleMobileMenu()" class="w-full text-left px-4 py-2.5 rounded-2xl text-sm font-medium flex justify-between items-center hover:bg-black/5 dark:hover:bg-white/5">
+        <span>Digitalisierung (3D & Video)</span>
+        <span class="font-mono text-xs text-gold">03</span>
+      </button>
+      <button onclick="openDirectProjectInquiry(); toggleMobileMenu()" class="w-full text-left px-4 py-2.5 rounded-2xl text-sm font-medium flex justify-between items-center btn-gold">
+        <span>Direkte Projektanfrage</span>
+        <span class="font-mono text-xs">→</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- MAIN CONTENT VIEWS -->
+  <main class="flex-grow relative z-10">
+    <!-- VIEW 0: HOME -->
+    <section id="view-home" class="view-section active">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-20">
+        
+        <div class="text-center max-w-3xl mx-auto mb-14 space-y-5">
+          <div class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full ios-solid text-xs font-mono text-gold">
+            <span>●</span>
+            <span>DIGITALWERKSTATT</span>
+          </div>
+
+          <h1 class="text-4xl sm:text-6xl font-bold tracking-tight leading-[1.08]">
+            Ingenieurskunst trifft <br/>
+            <span class="text-gold">digitale Praxis.</span>
+          </h1>
+
+          <p class="text-sec text-base sm:text-lg leading-relaxed max-w-xl mx-auto">
+            Drei fokussierte Leistungsbereiche: Praxisnahe <strong>KI-Beratung</strong>, erfahrene <strong>technische Projektleitung</strong> und präzise <strong>3D- & Video-Digitalisierung</strong>.
+          </p>
+
+          <div class="flex flex-wrap items-center justify-center gap-3 pt-2">
+            <button onclick="navigateTo('founder')" class="px-6 py-3 btn-primary text-sm font-medium">
+              Unverbindliches Erstgespräch anfragen
+            </button>
+            <button onclick="openDirectProjectInquiry()" class="px-6 py-3 ios-solid rounded-full text-sm font-medium hover:border-[#D4AF37]">
+              Direkte Projektanfrage
+            </button>
+          </div>
+        </div>
+
+        <!-- THE 3 PILLAR CARDS -->
+        <div class="grid lg:grid-cols-3 gap-6 mb-14">
+          
+          <!-- KACHEL 01: BERATUNG -->
+          <div onclick="navigateTo('consulting')"
+               onmouseenter="activateCardBgEffect('neural', this)"
+               onmouseleave="deactivateCardBgEffect()"
+               class="ios-card pillar-card p-7 flex flex-col justify-between cursor-pointer group">
+            <div>
+              <div class="flex items-center justify-between mb-6">
+                <span class="font-mono text-xs font-semibold text-gold">01 // KI-CONSULTING</span>
+                <div class="pillar-icon w-11 h-11 rounded-2xl ios-solid flex items-center justify-center transition-all">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                  </svg>
+                </div>
+              </div>
+
+              <h2 class="text-2xl font-bold mb-1.5">Beratung</h2>
+              <p class="text-xs font-semibold text-gold mb-4 leading-snug">
+                Individuelle Problemlösung statt theoretischer Standardkurse.
+              </p>
+              <p class="text-sec text-sm leading-relaxed mb-6">
+                Wir starten mit einem kurzen Gratis-Call zur Bedarfsanalyse. Danach setzen wir die optimale KI-Lösung gezielt per Video-Call oder direkt bei Ihnen vor Ort um.
+              </p>
+            </div>
+
+            <div class="pt-4 border-t border-hair flex items-center justify-between gap-2">
+              <span class="text-xs font-semibold text-gold leading-tight">
+                Gratis-Call & Beratung ansehen
+              </span>
+              <span class="pillar-arrow w-8 h-8 shrink-0 rounded-full ios-solid flex items-center justify-center text-xs transition-all">→</span>
+            </div>
+          </div>
+
+          <!-- KACHEL 02: PROJEKTLEITUNG -->
+          <div onclick="navigateTo('projektleitung')"
+               onmouseenter="activateCardBgEffect('milestones', this)"
+               onmouseleave="deactivateCardBgEffect()"
+               class="ios-card pillar-card p-7 flex flex-col justify-between cursor-pointer group">
+            <div>
+              <div class="flex items-center justify-between mb-6">
+                <span class="font-mono text-xs font-semibold text-gold">02 // PROJEKTLEITUNG</span>
+                <div class="pillar-icon w-11 h-11 rounded-2xl ios-solid flex items-center justify-center transition-all">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1"/>
+                  </svg>
+                </div>
+              </div>
+
+              <h2 class="text-2xl font-bold mb-1.5">Projektleitung</h2>
+              <p class="text-xs font-semibold text-gold mb-4 leading-snug">
+                Automotive (Rohbau & Gesamtfahrzeug) sowie Drohnenprojekte.
+              </p>
+              <p class="text-sec text-sm leading-relaxed mb-6">
+                Strukturierte Führung komplexer Entwicklungs- und Technikprojekte nach internationalen OEM-Standards – von der Konzeptphase bis zur Serienreife.
+              </p>
+            </div>
+
+            <div class="pt-4 border-t border-hair flex items-center justify-between gap-2">
+              <span class="text-xs font-semibold text-gold leading-tight">
+                OEM-Erfahrung & Projektumfang
+              </span>
+              <span class="pillar-arrow w-8 h-8 shrink-0 rounded-full ios-solid flex items-center justify-center text-xs transition-all">→</span>
+            </div>
+          </div>
+
+          <!-- KACHEL 03: DIGITALISIERUNG -->
+          <div onclick="navigateTo('digitalisierung')"
+               onmouseenter="activateCardBgEffect('digital3d', this)"
+               onmouseleave="deactivateCardBgEffect()"
+               class="ios-card pillar-card p-7 flex flex-col justify-between cursor-pointer group">
+            <div>
+              <div class="flex items-center justify-between mb-6">
+                <span class="font-mono text-xs font-semibold text-gold">03 // DIGITALISIERUNG</span>
+                <div class="pillar-icon w-11 h-11 rounded-2xl ios-solid flex items-center justify-center transition-all">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5M14 4l-2-1-2 1M4 7l2-1M4 7l2 1M4 7v2.5M12 21l-2-1m2 1l2-1m-2 1v-2.5M6 18l-2-1v-2.5M18 18l2-1v-2.5"/>
+                  </svg>
+                </div>
+              </div>
+
+              <h2 class="text-2xl font-bold mb-1.5">Digitalisierung</h2>
+              <p class="text-xs font-semibold text-gold mb-4 leading-snug">
+                3D-Drohnen-Photogrammetrie, Videoproduktion & Webdesign.
+              </p>
+              <p class="text-sec text-sm leading-relaxed mb-6">
+                Präzise 3D-Punktwolken und digitale Zwillinge aus der Luft kombiniert mit modernem Videomarketing – von der Kameraarbeit und dem Color Grading bis zur fertigen Website.
+              </p>
+            </div>
+
+            <div class="pt-4 border-t border-hair flex items-center justify-between gap-2">
+              <span class="text-xs font-semibold text-gold leading-tight">
+                Interaktiven 3D-Scanner & Media öffnen
+              </span>
+              <span class="pillar-arrow w-8 h-8 shrink-0 rounded-full ios-solid flex items-center justify-center text-xs transition-all">→</span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- PROJEKTVORSCHAU -->
+        <div class="ios-card p-6 sm:p-8 mb-12">
+          <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+            <div>
+              <span class="font-mono text-xs text-gold font-semibold uppercase tracking-wider">Showreel & Einblicke</span>
+              <h2 class="text-xl sm:text-2xl font-bold mt-0.5">Projektvorschau</h2>
+            </div>
+            <span class="font-mono text-[11px] px-3 py-1 rounded-full ios-pill text-mut">
+              ● Videos & Animationen in Kürze (`assets/videos/`)
+            </span>
+          </div>
+
+          <div class="grid md:grid-cols-3 gap-5">
+            <div class="ios-solid p-4 rounded-2xl border border-dashed border-[#D4AF37]/40 flex flex-col justify-between aspect-video relative overflow-hidden group">
+              <div class="flex items-center justify-between z-10">
+                <span class="font-mono text-[10px] text-gold font-semibold">SLOT 01 // KI-WORKFLOWS</span>
+                <span class="font-mono text-[10px] text-mut">MP4 / WEBGL</span>
+              </div>
+              <div class="my-auto text-center space-y-1.5 z-10">
+                <div class="w-10 h-10 rounded-full ios-pill mx-auto flex items-center justify-center text-gold group-hover:scale-110 transition-transform">▶</div>
+                <p class="text-xs font-semibold">KI-Automatisierung & ComfyUI</p>
+                <p class="text-[11px] text-mut font-mono">Animation / Video folgt</p>
+              </div>
+              <div class="text-[10px] font-mono text-mut z-10">16:9 Preview Container</div>
+            </div>
+
+            <div class="ios-solid p-4 rounded-2xl border border-dashed border-[#D4AF37]/40 flex flex-col justify-between aspect-video relative overflow-hidden group">
+              <div class="flex items-center justify-between z-10">
+                <span class="font-mono text-[10px] text-gold font-semibold">SLOT 02 // ENGINEERING</span>
+                <span class="font-mono text-[10px] text-mut">CAD / SIM</span>
+              </div>
+              <div class="my-auto text-center space-y-1.5 z-10">
+                <div class="w-10 h-10 rounded-full ios-pill mx-auto flex items-center justify-center text-gold group-hover:scale-110 transition-transform">▶</div>
+                <p class="text-xs font-semibold">Automotive & Drohnen-Projekte</p>
+                <p class="text-[11px] text-mut font-mono">Animation / Video folgt</p>
+              </div>
+              <div class="text-[10px] font-mono text-mut z-10">16:9 Preview Container</div>
+            </div>
+
+            <div class="ios-solid p-4 rounded-2xl border border-dashed border-[#D4AF37]/40 flex flex-col justify-between aspect-video relative overflow-hidden group">
+              <div class="flex items-center justify-between z-10">
+                <span class="font-mono text-[10px] text-gold font-semibold">SLOT 03 // 3D & FILM</span>
+                <span class="font-mono text-[10px] text-mut">SPLAT / 4K</span>
+              </div>
+              <div class="my-auto text-center space-y-1.5 z-10">
+                <div class="w-10 h-10 rounded-full ios-pill mx-auto flex items-center justify-center text-gold group-hover:scale-110 transition-transform">▶</div>
+                <p class="text-xs font-semibold">3D Gaussian Splatting & Grading</p>
+                <p class="text-[11px] text-mut font-mono">Animation / Video folgt</p>
+              </div>
+              <div class="text-[10px] font-mono text-mut z-10">16:9 Preview Container</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- KACHEL 04: IT PARTNER EINFY.DE -->
+        <div class="max-w-3xl mx-auto mt-6">
+          <div class="ios-card px-5 py-4 sm:px-6 sm:py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-l-4 border-l-[#D4AF37]">
+            <div class="space-y-0.5">
+              <span class="font-mono text-[10px] text-gold font-semibold uppercase tracking-wider">IT-Systempartner · einfy.de</span>
+              <h3 class="text-sm sm:text-base font-bold">
+                Lokale KI-Server und komplexe Cloud-Lösungen gefällig? Auch das ist möglich.
+              </h3>
+              <p class="text-xs text-sec">
+                Für tiefe IT-Infrastruktur, On-Premise KI-Hardware und Cloud-Architekturen arbeite ich direkt mit <strong>einfy.de</strong> zusammen.
+              </p>
+            </div>
+            <a href="https://www.einfy.de" target="_blank" rel="noopener noreferrer" class="btn-gold px-4 py-2 text-[11px] font-mono shrink-0 flex items-center gap-1.5">
+              <span>einfy.de</span>
+              <span>↗</span>
+            </a>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- VIEW 1: BERATUNG -->
+    <section id="view-consulting" class="view-section">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-20">
+        <div class="flex items-center justify-between mb-8">
+          <button onclick="navigateTo('home')" class="ios-solid px-4 py-2 rounded-full text-xs font-mono hover:border-[#D4AF37]">← Zurück</button>
+          <span class="font-mono text-xs text-gold font-semibold">01 // KI-CONSULTING</span>
+        </div>
+
+        <div class="ios-card p-7 sm:p-10 mb-10">
+          <div class="max-w-3xl space-y-4">
+            <span class="font-mono text-xs text-gold font-semibold uppercase">01 // KI-CONSULTING · PERSÖNLICHES SPARRING</span>
+            <h1 class="text-3xl sm:text-5xl font-bold tracking-tight">Beratung</h1>
+            <p class="text-base sm:text-lg font-semibold text-gold">Individuelle Problemlösung statt theoretischer Standardkurse.</p>
+            <p class="text-sec text-sm sm:text-base leading-relaxed">
+              In einem kurzen, unverbindlichen <strong>Gratis-Call</strong> klären wir Ihren konkreten Bedarf. Anschließend setzen wir die passende Lösung zielgerichtet per <strong>Live-Video-Call oder direkt bei Ihnen vor Ort</strong> um – inklusive Einrichtung optimaler KI-Workflows auf Ihrem System.
+            </p>
+            <div class="flex flex-wrap gap-3 pt-3">
+              <button onclick="navigateTo('founder')" class="px-6 py-3 btn-gold text-xs sm:text-sm">Kurzen Gratis-Call anfragen</button>
+              <button onclick="openDirectProjectInquiry()" class="px-6 py-3 btn-primary text-xs sm:text-sm font-medium">Direkte Projektanfrage</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="ios-card p-6 sm:p-9 mb-10">
+          <div class="flex flex-wrap items-center justify-between gap-4 pb-6 mb-6 border-b border-hair">
+            <div class="flex items-center gap-3">
+              <span class="w-2.5 h-2.5 rounded-full bg-[#D4AF37]"></span>
+              <span class="font-mono text-xs font-semibold">digitalwerkstatt // Ablauf: Gratis-Call → Video-Call oder Vor-Ort-Lösung</span>
+            </div>
+            <span class="font-mono text-xs text-mut">Praxisnahe Umsetzung</span>
+          </div>
+
+          <div class="grid lg:grid-cols-12 gap-6 items-center">
+            <div class="lg:col-span-5 space-y-2.5">
+              <button onclick="selectAiMod(0)" id="aimod-0" class="aimod-btn w-full text-left p-4 ios-solid border-[#D4AF37] transition-all">
+                <span class="font-mono text-[11px] text-gold font-semibold">SCHWERPUNKT 01</span>
+                <h4 class="font-bold text-sm mt-0.5">Bedarfsanalyse & Prompt-Systeme</h4>
+                <p class="text-xs text-sec mt-1">Strukturierte KI-Integration für Projektarbeit, Technik & Management.</p>
+              </button>
+              <button onclick="selectAiMod(1)" id="aimod-1" class="aimod-btn w-full text-left p-4 ios-solid transition-all">
+                <span class="font-mono text-[11px] text-mut font-semibold">SCHWERPUNKT 02</span>
+                <h4 class="font-bold text-sm mt-0.5">Lokale KI & Generative Medien</h4>
+                <p class="text-xs text-sec mt-1">Einrichtung von ComfyUI, lokalen Modellen & Bild-/Video-Pipelines direkt auf Ihrem System.</p>
+              </button>
+              <button onclick="selectAiMod(2)" id="aimod-2" class="aimod-btn w-full text-left p-4 ios-solid transition-all">
+                <span class="font-mono text-[11px] text-mut font-semibold">SCHWERPUNKT 03</span>
+                <h4 class="font-bold text-sm mt-0.5">Automatisierung & Custom AI-Tools</h4>
+                <p class="text-xs text-sec mt-1">Technische Blockaden lösen und maßgeschneiderte Assistenten aufbauen.</p>
+              </button>
+            </div>
+
+            <div class="lg:col-span-7 ios-solid p-6 space-y-5">
+              <div class="flex items-center justify-between">
+                <span id="aiTitle" class="font-mono text-xs font-semibold text-gold">SCHWERPUNKT 01 // BEDARFSANALYSE & WORKFLOW</span>
+                <span id="aiBadge" class="font-mono text-xs px-3 py-1 rounded-full ios-pill">Video-Call & Vor Ort</span>
+              </div>
+              <p id="aiDesc" class="text-sm text-sec leading-relaxed">
+                Nach dem kurzen Gratis-Call zum Kennenlernen Ihres Bedarfs entwickeln wir wiederverwendbare Prompt-Architekturen und Workflows, die sofort verlässliche Ergebnisse liefern.
+              </p>
+              <div id="aiLoader" class="hidden space-y-1.5">
+                <div class="flex justify-between font-mono text-[11px] text-[#8B5CF6]">
+                  <span>Consulting-Blueprint wird geladen...</span>
+                  <span>100%</span>
+                </div>
+                <div class="w-full h-1.5 rounded-full overflow-hidden bg-black/10 dark:bg-white/10">
+                  <div class="w-full h-full purple-loader"></div>
+                </div>
+              </div>
+              <div class="pt-3 border-t border-hair flex flex-wrap items-center justify-between gap-3">
+                <button onclick="runAiDemo()" class="px-4 py-2 rounded-full ios-pill text-xs font-mono font-medium hover:opacity-80">⚡ Ablauf simulieren</button>
+                <button onclick="openDirectProjectInquiry()" class="px-5 py-2 btn-gold text-xs">Direkte Projektanfrage →</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 2: PROJEKTLEITUNG -->
+    <section id="view-projektleitung" class="view-section">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-20">
+        <div class="flex items-center justify-between mb-8">
+          <button onclick="navigateTo('home')" class="ios-solid px-4 py-2 rounded-full text-xs font-mono hover:border-[#D4AF37]">← Zurück</button>
+          <span class="font-mono text-xs text-gold font-semibold">02 // PROJEKTLEITUNG</span>
+        </div>
+
+        <div class="max-w-3xl mb-8 space-y-2">
+          <h1 class="text-3xl sm:text-5xl font-bold tracking-tight">Technische Projektleitung.</h1>
+          <p class="text-sec text-base">
+            10 Jahre internationale Automotive-Erfahrung in <strong>Rohbau (inkl. Großguss) und Gesamtfahrzeug</strong> sowie Steuerung komplexer <strong>Drohnen- & C-UAS-Projekte</strong>.
+          </p>
+        </div>
+
+        <!-- OEM ERFAHRUNG -->
+        <div class="ios-card p-5 sm:p-6 mb-8">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <span class="font-mono text-[11px] text-gold font-semibold uppercase tracking-wider">Internationale OEM-Erfahrung</span>
+              <p class="text-xs text-sec mt-0.5">Erfolgreiche Entwicklungs- und Serienprojekte für etablierte Hersteller und internationale EV-Pioniere:</p>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="px-3.5 py-1.5 ios-solid rounded-full font-mono text-xs font-semibold border border-[#D4AF37]/40">Audi</span>
+              <span class="px-3.5 py-1.5 ios-solid rounded-full font-mono text-xs font-semibold border border-[#D4AF37]/40">VW</span>
+              <span class="px-3.5 py-1.5 ios-solid rounded-full font-mono text-xs font-semibold border border-[#D4AF37]/40">Mercedes-AMG</span>
+              <span class="px-3.5 py-1.5 ios-solid rounded-full font-mono text-xs font-semibold border border-[#D4AF37]/40">Rivian</span>
+              <span class="px-3.5 py-1.5 ios-solid rounded-full font-mono text-xs font-semibold border border-[#D4AF37]/40">Saleen</span>
+              <span class="px-3.5 py-1.5 ios-solid rounded-full font-mono text-xs font-semibold border border-[#D4AF37]/40">Evergrande</span>
+              <span class="px-3.5 py-1.5 ios-solid rounded-full font-mono text-xs font-semibold border border-[#D4AF37]/40">Bollinger</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="ios-card p-6 sm:p-9 mb-10">
+          <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+            <div>
+              <span class="font-mono text-xs text-gold font-semibold">PROJEKTSCHWERPUNKTE & REFERENZ</span>
+              <h2 class="text-xl sm:text-2xl font-bold mt-0.5">Rohbau, Gesamtfahrzeug & Drohnen-Systeme (UAV / C-UAS)</h2>
+            </div>
+
+            <div class="flex flex-wrap gap-1.5 p-1 ios-pill">
+              <button onclick="setAmgScope('rohbau')" id="amg-btn-rohbau" class="px-4 py-1.5 rounded-full text-xs font-medium btn-gold">Rohbau</button>
+              <button onclick="setAmgScope('overall')" id="amg-btn-overall" class="px-4 py-1.5 rounded-full text-xs font-medium text-sec">Gesamtfahrzeug</button>
+              <button onclick="setAmgScope('uav')" id="amg-btn-uav" class="px-4 py-1.5 rounded-full text-xs font-medium text-sec">Drohnen-Projekte</button>
+            </div>
+          </div>
+
+          <div class="grid lg:grid-cols-12 gap-7 items-center">
+            <div class="lg:col-span-7 space-y-2">
+              <div class="relative rounded-3xl overflow-hidden bg-[#111113] border border-white/10 aspect-[16/10]">
+                <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+
+                <svg id="amgOverlaySvg" viewBox="0 0 600 360" class="absolute inset-0 w-full h-full pointer-events-none transition-opacity duration-300">
+                  <g>
+                    <line x1="150" y1="265" x2="450" y2="265" stroke="#D4AF37" stroke-width="3.5" stroke-dasharray="8 4"/>
+                    <circle cx="290" cy="265" r="6" fill="#D4AF37"/>
+                    <line x1="290" y1="265" x2="290" y2="312" stroke="#D4AF37" stroke-width="1.5"/>
+                    <rect x="190" y="312" width="200" height="24" rx="12" fill="#111113" stroke="#D4AF37" stroke-width="1.2"/>
+                    <text x="290" y="328" text-anchor="middle" fill="#D4AF37" font-family="monospace" font-size="10" font-weight="600">ROHBAU · UNTERBODEN & GUSS</text>
+                  </g>
+                  <g>
+                    <path d="M390 155 L505 180 L520 245 L410 255 Z" fill="rgba(212, 175, 55, 0.22)" stroke="#D4AF37" stroke-width="2.5"/>
+                    <circle cx="465" cy="195" r="6" fill="#D4AF37"/>
+                    <line x1="465" y1="195" x2="465" y2="95" stroke="#D4AF37" stroke-width="1.5"/>
+                    <rect x="370" y="70" width="190" height="24" rx="12" fill="#111113" stroke="#D4AF37" stroke-width="1.2"/>
+                    <text x="465" y="86" text-anchor="middle" fill="#D4AF37" font-family="monospace" font-size="10" font-weight="600">HECKWAGEN & GROSSGUSS</text>
+                  </g>
+                </svg>
+
+                <div class="absolute bottom-3 left-4 font-mono text-[11px] text-white/90 bg-black/60 px-3 py-1 rounded-full backdrop-blur-md">
+                  Mercedes-AMG GT 4-Türer Coupé (X290)
+                </div>
+              </div>
+              <div class="flex items-center justify-between px-2 text-[11px] font-mono text-mut">
+                <span>Illustration: Fahrzeug-Rohbau</span>
+                <span>Platzhalter: eigenes Bild folgt</span>
+              </div>
+            </div>
+
+            <div class="lg:col-span-5 space-y-4">
+              <div class="ios-solid p-6 space-y-3">
+                <span id="amgScopeTag" class="font-mono text-xs text-gold font-semibold">SCHWERPUNKT // KAROSSERIEROHBAU</span>
+                <h3 id="amgScopeHeading" class="text-2xl font-bold">Rohbau & Spezialität Großguss</h3>
+                <p id="amgScopeCopy" class="text-sm text-sec leading-relaxed">
+                  Technische Projektleitung im Karosserierohbau (Body-in-White) mit ausgewiesener Spezialität im Bereich <strong>Großguss (Mega-/Giga-Casting)</strong> sowie komplexer Unterboden- und Heckwagenstrukturen – von der Konzeptphase über die internationale Lieferantensteuerung bis zur Serienreife.
+                </p>
+              </div>
+
+              <div class="grid grid-cols-2 gap-3">
+                <div class="ios-solid p-4">
+                  <span class="font-mono text-[10px] text-mut block">SPEZIALGEBIET</span>
+                  <span id="amgStat1" class="font-mono text-xs sm:text-sm font-bold text-gold">Rohbau & Großguss</span>
+                </div>
+                <div class="ios-solid p-4">
+                  <span class="font-mono text-[10px] text-mut block">TRACK RECORD</span>
+                  <span id="amgStat2" class="font-mono text-xs sm:text-sm font-bold">Audi, VW, Rivian u.a.</span>
+                </div>
+              </div>
+
+              <div class="pt-1">
+                <button onclick="openDirectProjectInquiry()" class="w-full py-3 btn-gold text-xs font-mono">Direkte Projektanfrage stellen →</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 3: DIGITALISIERUNG -->
+    <section id="view-digitalisierung" class="view-section">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-20">
+        <div class="flex items-center justify-between mb-8">
+          <button onclick="navigateTo('home')" class="ios-solid px-4 py-2 rounded-full text-xs font-mono hover:border-[#D4AF37]">← Zurück</button>
+          <span class="font-mono text-xs text-gold font-semibold">03 // DIGITALISIERUNG</span>
+        </div>
+
+        <div class="max-w-2xl mb-10 space-y-2">
+          <h1 class="text-3xl sm:text-5xl font-bold tracking-tight">3D-Photogrammetrie & Film.</h1>
+          <p class="text-sec text-base">Drohnengestützte 3D-Punktwolken und 3D-Modelle sowie Videomarketing von der Kamera bis zur fertigen Website.</p>
+        </div>
+
+        <div class="ios-card p-6 sm:p-8 mb-10">
+          <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+            <div>
+              <span class="font-mono text-xs text-gold font-semibold">INTERAKTIVER 3D-SCANNER</span>
+              <h2 class="text-xl font-bold mt-0.5">Drohnen-Photogrammetrie: Punktwolke & 3D-Objekt</h2>
+            </div>
+
+            <div class="flex items-center gap-1.5 p-1 ios-pill">
+              <button onclick="setPcMode('cloud')" id="pc-cloud" class="px-3.5 py-1.5 rounded-full text-xs font-medium btn-gold">Punktwolke</button>
+              <button onclick="setPcMode('mesh')" id="pc-mesh" class="px-3.5 py-1.5 rounded-full text-xs font-medium text-sec">3D-Mesh</button>
+              <button onclick="setPcMode('elev')" id="pc-elev" class="px-3.5 py-1.5 rounded-full text-xs font-medium text-sec">Höhenprofil</button>
+            </div>
+          </div>
+
+          <div class="relative rounded-3xl overflow-hidden bg-[#111113] h-[360px] sm:h-[420px] border border-white/10">
+            <canvas id="pointCloudCanvas" class="w-full h-full cursor-grab active:cursor-grabbing"></canvas>
+            <div class="absolute top-4 left-5 pointer-events-none font-mono text-[11px] text-white/70">
+              UAV-SCANNER AKTIV · <span class="text-[#D4AF37]">GSD 1.2 CM/PX</span>
+            </div>
+            <div class="absolute bottom-4 right-5 pointer-events-none font-mono text-[11px] text-white/60 bg-white/10 px-3 py-1 rounded-full backdrop-blur-md">
+              Ziehen zum Drehen
+            </div>
+          </div>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-6">
+          <div class="ios-card p-6 space-y-2">
+            <span class="font-mono text-xs text-gold font-semibold">01 // VIDEOGRAFIE</span>
+            <h3 class="text-lg font-bold">Kamera & Drohne</h3>
+            <p class="text-sm text-sec">Hochwertige Filmaufnahmen am Boden und aus der Luft (Aerial & FPV).</p>
+          </div>
+          <div class="ios-card p-6 space-y-2">
+            <span class="font-mono text-xs text-gold font-semibold">02 // POSTPRODUKTION</span>
+            <h3 class="text-lg font-bold">Schnitt & Grading</h3>
+            <p class="text-sm text-sec">Präziser Look und Sounddesign in DaVinci Resolve für maximale Wirkung.</p>
+          </div>
+          <div class="ios-card p-6 space-y-2">
+            <span class="font-mono text-xs text-gold font-semibold">03 // WEBDESIGN</span>
+            <h3 class="text-lg font-bold">Moderne Websites</h3>
+            <p class="text-sm text-sec">Schnelle, ästhetische Webseiten, die Film und 3D-Inhalte nahtlos präsentieren.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 4: PROFIL & KONTAKT -->
+    <section id="view-founder" class="view-section">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-20">
+        <div class="flex items-center justify-between mb-8">
+          <button onclick="navigateTo('home')" class="ios-solid px-4 py-2 rounded-full text-xs font-mono hover:border-[#D4AF37]">← Zurück</button>
+          <span class="font-mono text-xs text-gold font-semibold">PROFIL & KONTAKT</span>
+        </div>
+
+        <div class="grid lg:grid-cols-12 gap-8 items-start">
+          <div class="lg:col-span-7 space-y-6">
+            <div class="ios-card p-7 sm:p-9 space-y-5">
+              <span class="font-mono text-xs text-gold font-semibold">ÜBER MICH · MARCEL HÜBNER</span>
+              <h1 class="text-3xl font-bold tracking-tight">Ingenieurskunst trifft digitale Praxis.</h1>
+              <p class="text-sm sm:text-base text-sec leading-relaxed">
+                Hinter der <strong>digitalwerkstatt</strong> stehen ein Maschinenbau- und International-Management-Studium (B.Eng. & M.Sc.), zehn Jahre Erfahrung in der internationalen Automobilindustrie sowie zertifizierte KI-, Drohnen- und C-UAS-Expertise.
+              </p>
+              <div class="grid sm:grid-cols-2 gap-3 pt-2">
+                <div class="ios-solid p-4">
+                  <span class="font-mono text-[10px] text-gold font-semibold">AUSBILDUNG</span>
+                  <p class="text-sm font-bold mt-0.5">B.Eng. Maschinenbau & M.Sc. Management</p>
+                </div>
+                <div class="ios-solid p-4">
+                  <span class="font-mono text-[10px] text-gold font-semibold">AUTOMOTIVE & UAV</span>
+                  <p class="text-sm font-bold mt-0.5">10+ Jahre Automotive · 7+ Jahre UAV/C-UAS</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="ios-card p-6 border-l-4 border-l-[#D4AF37] space-y-2">
+              <span class="font-mono text-[11px] text-gold font-semibold">PARTNER · EINFY.DE</span>
+              <h3 class="text-base font-bold">Lokale KI-Server und komplexe Cloud-Lösungen gefällig? Auch das ist möglich.</h3>
+              <p class="text-xs text-sec">Gemeinsam mit meinem IT-Partner <strong>einfy.de</strong> realisieren wir dedizierte lokale KI-Cluster und maßgeschneiderte Cloud-Infrastrukturen.</p>
+              <a href="https://www.einfy.de" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 text-xs font-mono font-semibold text-gold hover:underline pt-1">
+                <span>Zu www.einfy.de</span><span>↗</span>
+              </a>
+            </div>
+          </div>
+
+          <div class="lg:col-span-5 ios-card p-7 sm:p-8" id="contactFormCard">
+            <span class="font-mono text-xs text-gold font-semibold">KONTAKT & PROJEKTANFRAGE</span>
+            <h2 class="text-2xl font-bold mt-1 mb-5">Direkte Projektanfrage</h2>
+
+            <form onsubmit="submitForm(event)" action="https://formspree.io/f/mykdpqwl" method="POST" class="space-y-4">
+              <input type="text" name="_gotcha" tabindex="-1" autocomplete="off" class="hidden" aria-hidden="true"/>
+              <input id="contactName" name="name" type="text" required placeholder="Name / Unternehmen" class="w-full px-4 py-3 ios-solid text-sm focus:outline-none focus:border-[#D4AF37]"/>
+              <input id="contactMail" name="email" type="email" required placeholder="E-Mail-Adresse" class="w-full px-4 py-3 ios-solid text-sm focus:outline-none focus:border-[#D4AF37]"/>
+              
+              <select id="contactTopicSelect" name="thema" class="w-full px-4 py-3 ios-solid text-sm focus:outline-none focus:border-[#D4AF37]">
+                <option value="projektanfrage">Direkte Projektanfrage (Allgemein)</option>
+                <option value="beratung">01. Beratung (Kurzer Gratis-Call / Video-Call / Vor Ort)</option>
+                <option value="projektleitung">02. Projektleitung (Automotive / Rohbau / C-UAS)</option>
+                <option value="digitalisierung">03. Digitalisierung (3D / Video / Web)</option>
+                <option value="einfy">Lokale KI-Server & Cloud (mit einfy.de)</option>
+              </select>
+
+              <textarea id="contactMsg" name="nachricht" rows="3" required placeholder="Kurze Projektskizze, Zielsetzung oder Wunschtermin für den Gratis-Call..." class="w-full px-4 py-3 ios-solid text-sm focus:outline-none focus:border-[#D4AF37]"></textarea>
+
+              <p class="text-[11px] text-mut leading-snug">
+                Mit dem Absenden werden Ihre Angaben über den Dienst Formspree (USA) an mich übermittelt. Hinweise in der <button type="button" onclick="navigateTo('datenschutz')" class="text-gold underline">Datenschutzerklärung</button> einverstanden.
+              </p>
+
+              <div id="formLoader" class="hidden p-3.5 rounded-2xl bg-[#7C3AED]/10 border border-[#7C3AED]/30 space-y-2">
+                <div class="flex justify-between font-mono text-xs text-[#8B5CF6] font-semibold">
+                  <span>Projektanfrage wird übermittelt...</span>
+                  <span id="formPct">0%</span>
+                </div>
+                <div class="w-full h-1.5 rounded-full bg-black/10 dark:bg-white/10 overflow-hidden">
+                  <div id="formBar" class="h-full w-0 purple-loader transition-all duration-200"></div>
+                </div>
+              </div>
+
+              <div id="formError" class="hidden p-3.5 rounded-2xl ios-solid border-red-500 font-mono text-xs text-red-500 font-semibold">
+                Senden fehlgeschlagen. Bitte erneut versuchen oder per E-Mail melden.
+              </div>
+
+              <div id="formDone" class="hidden p-3.5 rounded-2xl ios-solid border-[#D4AF37] font-mono text-xs text-gold font-semibold">
+                ✓ Vielen Dank! Ihre Anfrage wurde versendet.
+              </div>
+
+              <button id="formBtn" type="submit" class="w-full py-3.5 btn-gold text-sm">Projektanfrage absenden</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 5: IMPRESSUM -->
+    <section id="view-impressum" class="view-section">
+      <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-20">
+        <div class="flex items-center justify-between mb-8">
+          <button onclick="navigateTo('home')" class="ios-solid px-4 py-2 rounded-full text-xs font-mono hover:border-[#D4AF37]">← Zurück zur Startseite</button>
+          <span class="font-mono text-xs text-gold font-semibold">RECHTLICHES // § 5 DDG</span>
+        </div>
+
+        <div class="ios-card p-7 sm:p-10 space-y-6 text-sm leading-relaxed">
+          <h1 class="text-3xl font-bold tracking-tight">Impressum</h1>
+          <div class="space-y-1">
+            <h2 class="font-mono text-xs text-gold font-semibold uppercase">Angaben gemäß § 5 Digitale-Dienste-Gesetz (DDG)</h2>
+            <p class="font-semibold text-base">digitalwerkstatt</p>
+            <p class="text-sec">Inhaber: Marcel Hübner (Einzelunternehmen)</p>
+            <p class="text-sec">[Straße und Hausnummer eintragen]</p>
+            <p class="text-sec">[PLZ und Ort eintragen, Deutschland]</p>
+          </div>
+          <div class="space-y-1">
+            <h2 class="font-mono text-xs text-gold font-semibold uppercase">Kontakt</h2>
+            <p class="text-sec">Telefon: [Telefonnummer eintragen]</p>
+            <p class="text-sec">E-Mail: [E-Mail-Adresse eintragen]</p>
+          </div>
+          <div class="space-y-1">
+            <h2 class="font-mono text-xs text-gold font-semibold uppercase">Umsatzsteuer-ID</h2>
+            <p class="text-sec">Umsatzsteuer-Identifikationsnummer gemäß § 27 a Umsatzsteuergesetz:<br/>[DE-Nummer eintragen, falls vorhanden]<br/>Gemäß § 19 UStG wird keine Umsatzsteuer berechnet und ausgewiesen (Kleinunternehmerregelung). [Hinweis entfernen, falls Regelbesteuerung]</p>
+          </div>
+          <div class="space-y-1">
+            <h2 class="font-mono text-xs text-gold font-semibold uppercase">Redaktionell verantwortlich gemäß § 18 Abs. 2 MStV</h2>
+            <p class="text-sec">Marcel Hübner, Anschrift wie oben.</p>
+          </div>
+          <div class="space-y-2 pt-2 border-t border-hair">
+            <h2 class="font-mono text-xs text-gold font-semibold uppercase">Verbraucherstreitbeilegung</h2>
+            <p class="text-sec">Wir sind nicht bereit oder verpflichtet, an Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle teilzunehmen.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 6: DATENSCHUTZ -->
+    <section id="view-datenschutz" class="view-section">
+      <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-20">
+        <div class="flex items-center justify-between mb-8">
+          <button onclick="navigateTo('home')" class="ios-solid px-4 py-2 rounded-full text-xs font-mono hover:border-[#D4AF37]">← Zurück zur Startseite</button>
+          <span class="font-mono text-xs text-gold font-semibold">DATENSCHUTZ // DSGVO & TDDDG</span>
+        </div>
+
+        <div class="ios-card p-7 sm:p-10 space-y-6 text-sm leading-relaxed">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <h1 class="text-3xl font-bold tracking-tight">Datenschutzerklärung</h1>
+            <span class="px-3 py-1 rounded-full ios-pill font-mono text-xs text-gold font-semibold">Keine Cookies · Kein Tracking</span>
+          </div>
+
+          <div class="ios-solid p-4 border-l-4 border-l-[#D4AF37]">
+            <p class="font-semibold text-xs uppercase font-mono text-gold mb-1">Hinweis zur Cookie- & Tracking-Freiheit (§ 25 TDDDG)</p>
+            <p class="text-xs text-sec">
+              Diese Website verwendet <strong>keine Tracking-Cookies, keine Werbe-Tracker und keine Analyse-Dienste</strong>. Es werden keinerlei personenbezogene Nutzungsprofile erstellt. Daher ist kein Cookie-Consent-Banner erforderlich. [Nach Umstellung auf lokal gehostetes CSS prüfen: aktuell lädt die Seite noch Tailwind von cdn.tailwindcss.com, siehe Abschnitt 2.]
+            </p>
+          </div>
+
+          <div class="space-y-2">
+            <h2 class="font-mono text-xs text-gold font-semibold uppercase">1. Verantwortlicher</h2>
+            <p class="text-sec">Verantwortlicher im Sinne der DSGVO ist: <strong>digitalwerkstatt – Marcel Hübner</strong> (Kontaktdaten siehe <button onclick="navigateTo('impressum')" class="text-gold underline">Impressum</button>).</p>
+          </div>
+
+          <div class="space-y-2">
+            <h2 class="font-mono text-xs text-gold font-semibold uppercase">2. Hosting & Server-Logfiles</h2>
+            <p class="text-sec">Diese Website wird als statische Seite gehostet. Beim Aufruf werden technisch notwendige Verbindungsdaten (IP-Adresse, Zeitpunkt, Browsertyp) zur sicheren Auslieferung verarbeitet (Art. 6 Abs. 1 lit. f DSGVO). Hoster ist GitHub Pages (GitHub, Inc./Microsoft, USA; Datenübermittlung auf Grundlage des EU-US Data Privacy Framework*). Zusätzlich lädt diese Seite derzeit das Stylesheet-Framework Tailwind von cdn.tailwindcss.com; dabei wird Ihre IP-Adresse an den Anbieter übermittelt. [Vor Livegang durch lokales Hosting ersetzen und diesen Satz streichen.]</p>
+          </div>
+
+          <div class="space-y-2">
+            <h2 class="font-mono text-xs text-gold font-semibold uppercase">3. Kontaktformular & Projektanfragen</h2>
+            <p class="text-sec">Das Kontaktformular wird über den Dienst Formspree (Formspree, Inc., USA) betrieben. Beim Absenden werden Name, E-Mail-Adresse, Thema, Nachricht sowie technische Verbindungsdaten (u. a. IP-Adresse) an Formspree übermittelt und von dort als E-Mail an mich weitergeleitet; Formspree speichert die Einsendungen für den Abruf im Konto. Grundlage ist Art. 6 Abs. 1 lit. b DSGVO (Anfrage), die Übermittlung in die USA stützt sich auf Standardvertragsklauseln bzw. das EU-US Data Privacy Framework* [Vertrag zur Auftragsverarbeitung mit Formspree abschließen und prüfen]. Anfragen per E-Mail werden zur Bearbeitung verarbeitet (Art. 6 Abs. 1 lit. b bzw. f DSGVO) und gelöscht, sobald sie erledigt sind und keine gesetzlichen Aufbewahrungspflichten bestehen (z. B. 6 bzw. 8 Jahre bei Geschäftsbriefen/Buchungsbelegen*). Keine Weitergabe an weitere Dritte außer Ihrem und meinem E-Mail-Anbieter. [E-Mail-Anbieter und AVV eintragen.]</p>
+          </div>
+
+          <div class="space-y-2">
+            <h2 class="font-mono text-xs text-gold font-semibold uppercase">4. Ihre Betroffenenrechte</h2>
+            <p class="text-sec">Sie haben jederzeit das Recht auf Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung, Datenübertragbarkeit sowie Widerspruch (Art. 15–21 DSGVO) und ein Beschwerderecht bei einer Datenschutz-Aufsichtsbehörde (Art. 77 DSGVO).</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="mt-auto py-8 px-4 sm:px-6 lg:px-8 border-t border-hair relative z-10 bg-white/40 dark:bg-black/20 backdrop-blur-md">
+    <div class="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-xs font-mono text-mut">
+      <div class="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 text-center sm:text-left">
+        <span><strong class="text-current">digitalwerkstatt</strong> — Beratung · Projektleitung · Digitalisierung</span>
+        <span class="px-2.5 py-0.5 rounded-full ios-pill text-[10px] text-gold">Kein Cookie-Tracking</span>
+      </div>
+      <div class="flex flex-wrap items-center justify-center gap-5">
+        <a href="https://www.einfy.de" target="_blank" rel="noopener noreferrer" class="hover:text-gold transition-colors">IT-Partner: einfy.de ↗</a>
+        <button onclick="openDirectProjectInquiry()" class="hover:text-gold transition-colors">Projektanfrage</button>
+        <button onclick="navigateTo('impressum')" class="hover:text-gold transition-colors">Impressum</button>
+        <button onclick="navigateTo('datenschutz')" class="hover:text-gold transition-colors">Datenschutz</button>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Ausgelagerte Anwendungslogik -->
+  <script src="js/app.js"></script>
+</body>
+</html>

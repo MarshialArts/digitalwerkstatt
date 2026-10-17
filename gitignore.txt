@@ -1,0 +1,12 @@
+# macOS & Windows Systemdateien
+.DS_Store
+Thumbs.db
+
+# Editor & IDE Ordner
+.vscode/
+.idea/
+
+# Node / Build Artefakte (falls du später Tailwind lokal kompilierst)
+node_modules/
+dist/
+*.log
