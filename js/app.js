@@ -485,7 +485,7 @@ const amgData = {
     copy: 'Technische Projektleitung im Karosserierohbau (Body-in-White) mit ausgewiesener Spezialität im Bereich Großguss (Mega-/Giga-Casting) sowie komplexer Unterboden- und Heckwagenstrukturen – von der Konzeptphase über die internationale Lieferantensteuerung bis zur Serienreife.',
     s1: 'Rohbau & Großguss',
     s2: 'Audi, VW, Rivian u.a.',
-    img: 'img/amg_heckwagen.jpg',
+    img: 'img/amg_heckwagen.jpg?v=2',
     cap: 'Mercedes-AMG GT 4-Türer Coupé',
     sub: 'Referenzbeispiel: Mercedes-AMG GT 4-Türer',
     showOverlay: false
@@ -496,7 +496,7 @@ const amgData = {
     copy: 'Baugruppenübergreifende Steuerung im Gesamtfahrzeug: Technisches Schnittstellenmanagement, Digital Mockup (DMU) und geometrische Absicherung, Reifegradmanagement sowie internationale Erprobungs- und Anlaufkoordination.',
     s1: 'Schnittstellen & DMU',
     s2: 'OEM-Reifegradsteuerung',
-    img: 'img/saleen_gesamt.jpg',
+    img: 'img/saleen_gesamt.jpg?v=2',
     cap: 'Gesamtfahrzeug-Entwicklung · Saleen S1',
     sub: 'Referenzbeispiel: Saleen Gesamtfahrzeug',
     showOverlay: false
