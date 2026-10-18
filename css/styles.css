@@ -100,7 +100,8 @@ body {
   transition: transform 0.42s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.pillar-card:hover {
+.pillar-card:hover,
+.pillar-card.in-focus {
   transform: translateY(-9px) scale(1.012);
   border-color: var(--gold-bright);
   box-shadow: 
@@ -108,8 +109,10 @@ body {
     0 0 0 1.5px var(--gold-bright);
 }
 
-.pillar-card:hover::before { opacity: 1; }
-.pillar-card:hover::after { transform: scaleX(1); }
+.pillar-card:hover::before,
+.pillar-card.in-focus::before { opacity: 1; }
+.pillar-card:hover::after,
+.pillar-card.in-focus::after { transform: scaleX(1); }
 
 .pillar-card:hover .pillar-icon {
   background: linear-gradient(135deg, var(--gold-primary), var(--gold-bright));

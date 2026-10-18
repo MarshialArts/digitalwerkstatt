@@ -352,7 +352,46 @@ function renderAmbientBg() {
 }
 
 // 4. SPA Router & Direct Project Inquiry Helper
+// Routing: jede Ansicht hat eine URL (#beratung etc.), Zurück-Button bleibt auf der Seite
+const ROUTES = {
+  home: '',
+  consulting: 'beratung',
+  projektleitung: 'projektleitung',
+  digitalisierung: 'digitalisierung',
+  founder: 'ueber-mich',
+  impressum: 'impressum',
+  datenschutz: 'datenschutz'
+};
+const VIEW_TITLES = {
+  consulting: 'KI-Beratung',
+  projektleitung: 'Projektleitung',
+  digitalisierung: 'Digitalisierung',
+  founder: 'Über mich & Kontakt',
+  impressum: 'Impressum',
+  datenschutz: 'Datenschutz'
+};
+const BASE_TITLE = document.title;
+
+function viewFromHash() {
+  const slug = decodeURIComponent(location.hash.replace(/^#\/?/, '')).toLowerCase();
+  if (!slug) return 'home';
+  const hit = Object.keys(ROUTES).find(k => ROUTES[k] === slug || k === slug);
+  return hit || 'home';
+}
+
 function navigateTo(viewId) {
+  if (!(viewId in ROUTES)) viewId = 'home';
+  if (viewFromHash() !== viewId) {
+    history.pushState(null, '', ROUTES[viewId] ? '#' + ROUTES[viewId] : location.pathname + location.search);
+  }
+  showView(viewId);
+}
+
+window.addEventListener('popstate', () => showView(viewFromHash()));
+if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+
+function showView(viewId) {
+  document.title = VIEW_TITLES[viewId] ? VIEW_TITLES[viewId] + ' | digitalwerkstatt' : BASE_TITLE;
   const loader = document.getElementById('topLoader');
   if (loader) loader.style.opacity = '1';
   deactivateCardBgEffect();
@@ -372,6 +411,7 @@ function navigateTo(viewId) {
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
     if (viewId === 'digitalisierung') resizeCanvas();
+    requestCardFocusUpdate();
     setTimeout(() => {
       if (loader) loader.style.opacity = '0';
     }, 200);
@@ -445,7 +485,10 @@ const amgData = {
     copy: 'Technische Projektleitung im Karosserierohbau (Body-in-White) mit ausgewiesener Spezialität im Bereich Großguss (Mega-/Giga-Casting) sowie komplexer Unterboden- und Heckwagenstrukturen – von der Konzeptphase über die internationale Lieferantensteuerung bis zur Serienreife.',
     s1: 'Rohbau & Großguss',
     s2: 'Audi, VW, Rivian u.a.',
-    showOverlay: true
+    img: 'img/amg_heckwagen.jpg',
+    cap: 'Mercedes-AMG GT 4-Türer Coupé',
+    sub: 'Referenzbeispiel: Mercedes-AMG GT 4-Türer',
+    showOverlay: false
   },
   overall: {
     tag: 'SCHWERPUNKT // GESAMTFAHRZEUG',
@@ -453,6 +496,9 @@ const amgData = {
     copy: 'Baugruppenübergreifende Steuerung im Gesamtfahrzeug: Technisches Schnittstellenmanagement, Digital Mockup (DMU) und geometrische Absicherung, Reifegradmanagement sowie internationale Erprobungs- und Anlaufkoordination.',
     s1: 'Schnittstellen & DMU',
     s2: 'OEM-Reifegradsteuerung',
+    img: 'img/saleen_gesamt.jpg',
+    cap: 'Gesamtfahrzeug-Entwicklung · Saleen S1',
+    sub: 'Referenzbeispiel: Saleen Gesamtfahrzeug',
     showOverlay: false
   },
   uav: {
@@ -461,6 +507,9 @@ const amgData = {
     copy: 'Projektsteuerung und Produktmanagement für kommerzielle Drohnen-Befliegungen sowie C-UAS-Systeme (Counter-UAS / Drohnenabwehr und Luftraumsicherheit) – von der technischen Konzeption über die Systemintegration bis zur operativen Durchführung.',
     s1: 'UAV & C-UAS Erfahrung',
     s2: '7+ Jahre Flugpraxis',
+    img: 'img/cuas.jpg',
+    cap: 'C-UAS · Drohnenabwehr',
+    sub: 'Drohnen- & C-UAS-Projekte',
     showOverlay: false
   }
 };
@@ -489,7 +538,20 @@ function setAmgScope(key) {
   if (copyEl) copyEl.textContent = d.copy;
   if (s1El) s1El.textContent = d.s1;
   if (s2El) s2El.textContent = d.s2;
-  if (svgEl) svgEl.style.opacity = d.showOverlay ? '1' : '0.15';
+  if (svgEl) svgEl.style.opacity = d.showOverlay ? '1' : '0';
+
+  const photoEl = document.getElementById('amgPhoto');
+  const capEl = document.getElementById('amgCaption');
+  const subEl = document.getElementById('amgSubCaption');
+  if (photoEl) {
+    if (d.img) photoEl.src = d.img;
+    photoEl.style.opacity = d.img ? '1' : '0';
+  }
+  if (capEl) {
+    capEl.textContent = d.cap;
+    capEl.style.display = d.cap ? '' : 'none';
+  }
+  if (subEl) subEl.textContent = d.sub;
 }
 
 // 7. Subpage 03: Interactive 3D Point Cloud Scanner
@@ -680,11 +742,58 @@ async function submitForm(e) {
   }
 }
 
+// Touch-Geräte: Karte in der Bildschirmmitte aktiviert Hintergrund-Animation und Highlight
+const focusCards = [];
+let focusedCard = null;
+let focusTicking = false;
+
+function updateCardFocus() {
+  focusTicking = false;
+  const home = document.getElementById('view-home');
+  const touchLayout = window.matchMedia('(hover: none), (max-width: 1023px)').matches;
+  let best = null;
+  if (touchLayout && home && home.classList.contains('active')) {
+    const mid = window.innerHeight / 2;
+    let bestDist = Infinity;
+    focusCards.forEach(c => {
+      const r = c.card.getBoundingClientRect();
+      if (r.bottom < 0 || r.top > window.innerHeight) return;
+      const dist = Math.abs((r.top + r.bottom) / 2 - mid);
+      if (dist < r.height * 0.6 && dist < bestDist) { best = c; bestDist = dist; }
+    });
+  }
+  if (focusedCard && focusedCard !== best) {
+    focusedCard.card.classList.remove('in-focus');
+    if (!best) deactivateCardBgEffect();
+  }
+  if (best) {
+    best.card.classList.add('in-focus');
+    activateCardBgEffect(best.type, best.card);
+  }
+  focusedCard = best;
+}
+
+function requestCardFocusUpdate() {
+  if (focusTicking) return;
+  focusTicking = true;
+  requestAnimationFrame(updateCardFocus);
+}
+
+function initCardFocus() {
+  document.querySelectorAll('.pillar-card[onmouseenter]').forEach(card => {
+    const m = /activateCardBgEffect\('(\w+)'/.exec(card.getAttribute('onmouseenter'));
+    if (m) focusCards.push({ card, type: m[1] });
+  });
+  window.addEventListener('scroll', requestCardFocusUpdate, { passive: true });
+  window.addEventListener('resize', requestCardFocusUpdate);
+}
+
 // 9. Initialize App on DOM Ready
 window.addEventListener('DOMContentLoaded', () => {
   initTheme();
+  initCardFocus();
   resizeBgCanvas();
-  navigateTo('home');
+  showView(viewFromHash());
   resizeCanvas();
   requestAnimationFrame(renderScanner);
   requestAnimationFrame(renderAmbientBg);

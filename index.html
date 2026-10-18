@@ -134,18 +134,13 @@
       <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-20">
         
         <div class="text-center max-w-3xl mx-auto mb-14 space-y-5">
-          <div class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full ios-solid text-xs font-mono text-gold">
-            <span>●</span>
-            <span>DIGITALWERKSTATT</span>
-          </div>
-
           <h1 class="text-4xl sm:text-6xl font-bold tracking-tight leading-[1.08]">
             Ingenieurskunst trifft <br/>
             <span class="text-gold">digitale Praxis.</span>
           </h1>
 
           <p class="text-sec text-base sm:text-lg leading-relaxed max-w-xl mx-auto">
-            Drei fokussierte Leistungsbereiche: Praxisnahe <strong>KI-Beratung</strong>, erfahrene <strong>technische Projektleitung</strong> und präzise <strong>3D- & Video-Digitalisierung</strong>.
+            Praxisnahe <strong>KI-Beratung</strong>, erfahrene <strong>technische Projektleitung</strong> und präzise <strong>3D- & Video-Digitalisierung</strong>.
           </p>
 
           <div class="flex flex-wrap items-center justify-center gap-3 pt-2">
@@ -465,6 +460,7 @@
           <div class="grid lg:grid-cols-12 gap-7 items-center">
             <div class="lg:col-span-7 space-y-2">
               <div class="relative rounded-3xl overflow-hidden bg-[#111113] border border-white/10 aspect-[16/10]">
+                <img id="amgPhoto" src="img/amg_heckwagen.jpg" alt="Mercedes-AMG GT 4-Türer Coupé" class="absolute inset-0 w-full h-full object-cover transition-opacity duration-300" />
                 <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
 
                 <svg id="amgOverlaySvg" viewBox="0 0 600 360" class="absolute inset-0 w-full h-full pointer-events-none transition-opacity duration-300">
@@ -484,13 +480,12 @@
                   </g>
                 </svg>
 
-                <div class="absolute bottom-3 left-4 font-mono text-[11px] text-white/90 bg-black/60 px-3 py-1 rounded-full backdrop-blur-md">
-                  Mercedes-AMG GT 4-Türer Coupé (X290)
+                <div id="amgCaption" class="absolute bottom-3 left-4 font-mono text-[11px] text-white/90 bg-black/60 px-3 py-1 rounded-full backdrop-blur-md">
+                  Mercedes-AMG GT 4-Türer Coupé
                 </div>
               </div>
               <div class="flex items-center justify-between px-2 text-[11px] font-mono text-mut">
-                <span>Illustration: Fahrzeug-Rohbau</span>
-                <span>Platzhalter: eigenes Bild folgt</span>
+                <span id="amgSubCaption">Referenzbeispiel: Mercedes-AMG GT 4-Türer</span>
               </div>
             </div>
 
