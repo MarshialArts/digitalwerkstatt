@@ -9,31 +9,8 @@
   <!-- Dynamic SVG Favicon (Gold/Black 'dw' Badge) -->
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='46' fill='%23111113' stroke='%23D4AF37' stroke-width='6'/><text x='50' y='62' font-family='monospace' font-size='38' font-weight='bold' fill='%23F5F5F7' text-anchor='middle'>dw</text></svg>" />
 
-  <!-- Tailwind CSS (Hinweis: Für Live-Produktion idealerweise lokal bauen, siehe README) -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['-apple-system', 'BlinkMacSystemFont', '"SF Pro Display"', '"Inter"', 'system-ui', 'sans-serif'],
-            mono: ['"SF Mono"', '"JetBrains Mono"', 'ui-monospace', 'monospace'],
-          },
-          colors: {
-            ios: {
-              lightBg: '#F5F5F7',
-              darkBg: '#1C1C1E',
-              black: '#111113',
-              gold: '#B89146',
-              goldBright: '#D4AF37',
-              purple: '#7C3AED'
-            }
-          }
-        }
-      }
-    }
-  </script>
+  <!-- Tailwind CSS (lokal gebaut: Quelle tailwind.config.js, Befehl in docs/tailwind-build.md) -->
+  <link rel="stylesheet" href="css/tailwind.css" />
 
   <!-- Eigenes Stylesheet -->
   <link rel="stylesheet" href="css/styles.css" />
@@ -119,6 +96,10 @@
       <button onclick="navigateTo('digitalisierung'); toggleMobileMenu()" class="w-full text-left px-4 py-2.5 rounded-2xl text-sm font-medium flex justify-between items-center hover:bg-black/5 dark:hover:bg-white/5">
         <span>Digitalisierung (3D & Video)</span>
         <span class="font-mono text-xs text-gold">03</span>
+      </button>
+      <button onclick="navigateTo('founder'); toggleMobileMenu()" class="w-full text-left px-4 py-2.5 rounded-2xl text-sm font-medium flex justify-between items-center hover:bg-black/5 dark:hover:bg-white/5">
+        <span>Profil & Kontakt</span>
+        <span class="font-mono text-xs text-gold">04</span>
       </button>
       <button onclick="openDirectProjectInquiry(); toggleMobileMenu()" class="w-full text-left px-4 py-2.5 rounded-2xl text-sm font-medium flex justify-between items-center btn-gold">
         <span>Direkte Projektanfrage</span>
@@ -336,67 +317,84 @@
       <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-20">
         <div class="flex items-center justify-between mb-8">
           <button onclick="navigateTo('home')" class="ios-solid px-4 py-2 rounded-full text-xs font-mono hover:border-[#D4AF37]">← Zurück</button>
-          <span class="font-mono text-xs text-gold font-semibold">01 // KI-CONSULTING</span>
+          <span class="font-mono text-xs text-gold font-semibold">01 // BERATUNG</span>
         </div>
 
-        <div class="ios-card p-7 sm:p-10 mb-10">
-          <div class="max-w-3xl space-y-4">
-            <span class="font-mono text-xs text-gold font-semibold uppercase">01 // KI-CONSULTING · PERSÖNLICHES SPARRING</span>
-            <h1 class="text-3xl sm:text-5xl font-bold tracking-tight">Beratung</h1>
-            <p class="text-base sm:text-lg font-semibold text-gold">Individuelle Problemlösung statt theoretischer Standardkurse.</p>
-            <p class="text-sec text-sm sm:text-base leading-relaxed">
-              In einem kurzen, unverbindlichen <strong>Gratis-Call</strong> klären wir Ihren konkreten Bedarf. Anschließend setzen wir die passende Lösung zielgerichtet per <strong>Live-Video-Call oder direkt bei Ihnen vor Ort</strong> um – inklusive Einrichtung optimaler KI-Workflows auf Ihrem System.
-            </p>
-            <div class="flex flex-wrap gap-3 pt-3">
-              <button onclick="navigateTo('founder')" class="px-6 py-3 btn-gold text-xs sm:text-sm">Kurzen Gratis-Call anfragen</button>
-              <button onclick="openDirectProjectInquiry()" class="px-6 py-3 btn-primary text-xs sm:text-sm font-medium">Direkte Projektanfrage</button>
-            </div>
-          </div>
+        <div class="max-w-3xl mb-8 space-y-2">
+          <h1 class="text-3xl sm:text-5xl font-bold tracking-tight">KI-Beratung.</h1>
+          <p class="text-sec text-base">
+            Individuelle Problemlösung statt theoretischer Standardkurse: persönlich, praxisnah und auf Ihren Anwendungsfall zugeschnitten, per <strong>Video-Call oder vor Ort</strong>.
+          </p>
         </div>
 
         <div class="ios-card p-6 sm:p-9 mb-10">
-          <div class="flex flex-wrap items-center justify-between gap-4 pb-6 mb-6 border-b border-hair">
-            <div class="flex items-center gap-3">
-              <span class="w-2.5 h-2.5 rounded-full bg-[#D4AF37]"></span>
-              <span class="font-mono text-xs font-semibold">digitalwerkstatt // Ablauf: Gratis-Call → Video-Call oder Vor-Ort-Lösung</span>
+          <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+            <div>
+              <span class="font-mono text-xs text-gold font-semibold">LEISTUNGSSCHWERPUNKTE</span>
+              <h2 class="text-xl sm:text-2xl font-bold mt-0.5">Bedarfsanalyse, EU AI Act & Datenschutz</h2>
             </div>
-            <span class="font-mono text-xs text-mut">Praxisnahe Umsetzung</span>
+
+            <div class="grid grid-cols-2 gap-1 p-1 ios-pill w-full sm:w-auto">
+              <button onclick="setAiScope('bedarf')" id="ai-btn-bedarf" class="scope-btn scope-on">Bedarfsanalyse</button>
+              <button onclick="setAiScope('aiact')" id="ai-btn-aiact" class="scope-btn">EU AI Act & Datenschutz</button>
+            </div>
           </div>
 
-          <div class="grid lg:grid-cols-12 gap-6 items-center">
-            <div class="lg:col-span-5 space-y-2.5">
-              <button onclick="selectAiMod(0)" id="aimod-0" class="aimod-btn w-full text-left p-4 ios-solid border-[#D4AF37] transition-all">
-                <span class="font-mono text-[11px] text-gold font-semibold">SCHWERPUNKT 01</span>
-                <h4 class="font-bold text-sm mt-0.5">Bedarfsanalyse</h4>
-                <p class="text-xs text-sec mt-1">Individuelle Bedarfsanalyse für Ihren Anwendungsfall.</p>
-              </button>
-              <button onclick="selectAiMod(1)" id="aimod-1" class="aimod-btn w-full text-left p-4 ios-solid transition-all">
-                <span class="font-mono text-[11px] text-mut font-semibold">SCHWERPUNKT 02</span>
-                <h4 class="font-bold text-sm mt-0.5">EU AI Act & Datenschutz</h4>
-                <p class="text-xs text-sec mt-1">Pflichten, Fristen und praktische Umsetzung im Unternehmen.</p>
-              </button>
+          <div class="grid lg:grid-cols-12 gap-7 items-stretch">
+            <div class="lg:col-span-7 space-y-4">
+              <div class="ios-solid p-6 space-y-4 h-full">
+                <span class="font-mono text-[11px] text-gold font-semibold uppercase tracking-wider">Ablauf</span>
+                <ol class="space-y-4">
+                  <li class="flex gap-4">
+                    <span class="font-mono text-xs font-bold text-gold pt-0.5">01</span>
+                    <div>
+                      <h3 class="text-sm font-bold">Gratis-Call</h3>
+                      <p class="text-xs text-sec mt-0.5">Kurzes, unverbindliches Kennenlernen: Ziel und Bedarf klären.</p>
+                    </div>
+                  </li>
+                  <li class="flex gap-4">
+                    <span class="font-mono text-xs font-bold text-gold pt-0.5">02</span>
+                    <div>
+                      <h3 class="text-sm font-bold">Analyse & Konzept</h3>
+                      <p class="text-xs text-sec mt-0.5">Ihr Anwendungsfall wird eingeordnet, das Vorgehen individuell abgestimmt.</p>
+                    </div>
+                  </li>
+                  <li class="flex gap-4">
+                    <span class="font-mono text-xs font-bold text-gold pt-0.5">03</span>
+                    <div>
+                      <h3 class="text-sm font-bold">Umsetzung</h3>
+                      <p class="text-xs text-sec mt-0.5">Coaching per Live-Video-Call oder direkt bei Ihnen vor Ort.</p>
+                    </div>
+                  </li>
+                </ol>
+                <div class="pt-4 border-t border-hair">
+                  <span class="font-mono text-[11px] text-gold font-semibold uppercase tracking-wider">Inhalte</span>
+                  <div id="aiChips" class="flex flex-wrap gap-2 mt-3"></div>
+                </div>
+              </div>
             </div>
 
-            <div class="lg:col-span-7 ios-solid p-6 space-y-5">
-              <div class="flex items-center justify-between">
-                <span id="aiTitle" class="font-mono text-xs font-semibold text-gold">SCHWERPUNKT 01 // BEDARFSANALYSE</span>
-                <span id="aiBadge" class="font-mono text-xs px-3 py-1 rounded-full ios-pill">Video-Call & Vor Ort</span>
+            <div class="lg:col-span-5 space-y-4">
+              <div class="ios-solid p-6 space-y-3">
+                <span id="aiTag" class="font-mono text-xs text-gold font-semibold">SCHWERPUNKT // BEDARFSANALYSE</span>
+                <h3 id="aiHeading" class="text-2xl font-bold">Bedarfsanalyse</h3>
+                <p id="aiCopy" class="text-sm text-sec leading-relaxed"></p>
               </div>
-              <p id="aiDesc" class="text-sm text-sec leading-relaxed">
-                Professionell und individuell gestaltetes Coaching auf Ihren Anwendungsfall, inkl. Prompts und Tools. Grundlagen, effiziente Foto- und Videoerstellung und mehr.
-              </p>
-              <div id="aiLoader" class="hidden space-y-1.5">
-                <div class="flex justify-between font-mono text-[11px] text-[#8B5CF6]">
-                  <span>Consulting-Blueprint wird geladen...</span>
-                  <span>100%</span>
+
+              <div class="grid grid-cols-2 gap-3">
+                <div class="ios-solid p-4">
+                  <span id="aiStat1Label" class="font-mono text-[10px] text-mut block">FORMAT</span>
+                  <span id="aiStat1" class="font-mono text-xs sm:text-sm font-bold text-gold">Individuell, 1:1</span>
                 </div>
-                <div class="w-full h-1.5 rounded-full overflow-hidden bg-black/10 dark:bg-white/10">
-                  <div class="w-full h-full purple-loader"></div>
+                <div class="ios-solid p-4">
+                  <span id="aiStat2Label" class="font-mono text-[10px] text-mut block">ORT</span>
+                  <span id="aiStat2" class="font-mono text-xs sm:text-sm font-bold">Video-Call oder vor Ort</span>
                 </div>
               </div>
-              <div class="pt-3 border-t border-hair flex flex-wrap items-center justify-between gap-3">
-                <button onclick="runAiDemo()" class="px-4 py-2 rounded-full ios-pill text-xs font-mono font-medium hover:opacity-80">⚡ Ablauf simulieren</button>
-                <button onclick="openDirectProjectInquiry()" class="px-5 py-2 btn-gold text-xs">Direkte Projektanfrage →</button>
+
+              <div class="pt-1 flex flex-col sm:flex-row gap-3">
+                <button onclick="openDirectProjectInquiry()" class="flex-1 py-3 btn-gold text-xs font-mono">Direkte Projektanfrage →</button>
+                <button onclick="navigateTo('founder')" class="flex-1 py-3 btn-primary text-xs font-mono">Gratis-Call anfragen</button>
               </div>
             </div>
           </div>
@@ -422,14 +420,14 @@
         <div class="ios-card p-6 sm:p-9 mb-10">
           <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
             <div>
-              <span class="font-mono text-xs text-gold font-semibold">PROJEKTSCHWERPUNKTE & REFERENZ</span>
+              <span class="font-mono text-xs text-gold font-semibold">PROJEKTSCHWERPUNKTE</span>
               <h2 class="text-xl sm:text-2xl font-bold mt-0.5">Rohbau, Gesamtfahrzeug & Drohnen-Systeme (UAV / C-UAS)</h2>
             </div>
 
-            <div class="flex flex-wrap gap-1.5 p-1 ios-pill">
-              <button onclick="setAmgScope('rohbau')" id="amg-btn-rohbau" class="px-4 py-1.5 rounded-full text-xs font-medium btn-gold">Rohbau</button>
-              <button onclick="setAmgScope('overall')" id="amg-btn-overall" class="px-4 py-1.5 rounded-full text-xs font-medium text-sec">Gesamtfahrzeug</button>
-              <button onclick="setAmgScope('uav')" id="amg-btn-uav" class="px-4 py-1.5 rounded-full text-xs font-medium text-sec">Drohnen-Projekte</button>
+            <div class="grid grid-cols-3 gap-1 p-1 ios-pill w-full sm:w-auto">
+              <button onclick="setAmgScope('rohbau')" id="amg-btn-rohbau" class="scope-btn scope-on">Rohbau</button>
+              <button onclick="setAmgScope('overall')" id="amg-btn-overall" class="scope-btn">Gesamtfahrzeug</button>
+              <button onclick="setAmgScope('uav')" id="amg-btn-uav" class="scope-btn">Drohnen-Projekte</button>
             </div>
           </div>
 
@@ -444,7 +442,7 @@
                 </div>
               </div>
               <div class="flex items-center justify-between px-2 text-[11px] font-mono text-mut">
-                <span id="amgSubCaption">Referenzbeispiel: Mercedes-AMG GT 4-Türer</span>
+                <span id="amgSubCaption">KI-generierte Illustration</span>
               </div>
             </div>
 
@@ -479,8 +477,8 @@
         <div class="ios-card p-5 sm:p-6">
           <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-              <span class="font-mono text-[11px] text-gold font-semibold uppercase tracking-wider">Internationale OEM-Erfahrung</span>
-              <p class="text-xs text-sec mt-0.5">Erfolgreiche Entwicklungs- und Serienprojekte für etablierte Hersteller und internationale EV-Pioniere:</p>
+              <span class="font-mono text-[11px] text-gold font-semibold uppercase tracking-wider">Internationale Projekterfahrung</span>
+              <p class="text-xs text-sec mt-0.5">Erfahrung bei:</p>
             </div>
             <div class="flex flex-wrap items-center gap-2">
               <span class="px-3.5 py-1.5 ios-solid rounded-full font-mono text-xs font-semibold border border-[#D4AF37]/40">Audi</span>
@@ -569,10 +567,10 @@
             <div class="ios-card p-7 sm:p-9 space-y-5">
               <span class="font-mono text-xs text-gold font-semibold">ÜBER MICH · MARCEL HÜBNER</span>
               <h1 class="text-3xl font-bold tracking-tight">Ingenieurskunst trifft digitale Praxis.</h1>
-              <div class="flex flex-col sm:flex-row gap-5 items-start">
+              <div class="flex flex-col sm:flex-row gap-5 items-center sm:items-start">
               <img src="img/profil-beispiel.svg" alt="Beispielfoto Marcel Hübner" width="160" height="160" class="w-32 h-32 sm:w-40 sm:h-40 rounded-3xl object-cover shrink-0 border border-white/10" />
               <p class="text-sm sm:text-base text-sec leading-relaxed">
-                Hinter der <strong>digitalwerkstatt</strong> stehen ein Ingenieurstudium mit zwei Master-Abschlüssen, zehn Jahre Erfahrung in der internationalen Automobilindustrie sowie zertifizierte KI-, Drohnen- und C-UAS-Expertise.
+                Hinter der <strong>digitalwerkstatt</strong> stehen ein Ingenieurstudium mit zwei Master-Abschlüssen, zehn Jahre Erfahrung in der internationalen Automobilindustrie sowie Erfahrung mit Drohnen- und C-UAS-Projekten. Zertifizierte Weiterbildung zum AI-Manager (IU Akademie).
               </p>
               </div>
               <div class="grid sm:grid-cols-2 gap-3 pt-2">
@@ -705,7 +703,7 @@
           <div class="ios-solid p-4 border-l-4 border-l-[#D4AF37]">
             <p class="font-semibold text-xs uppercase font-mono text-gold mb-1">Hinweis zur Cookie- & Tracking-Freiheit (§ 25 TDDDG)</p>
             <p class="text-xs text-sec">
-              Diese Website verwendet <strong>keine Tracking-Cookies, keine Werbe-Tracker und keine Analyse-Dienste</strong>. Es werden keinerlei personenbezogene Nutzungsprofile erstellt. Daher ist kein Cookie-Consent-Banner erforderlich. [Nach Umstellung auf lokal gehostetes CSS prüfen: aktuell lädt die Seite noch Tailwind von cdn.tailwindcss.com, siehe Abschnitt 2.]
+              Diese Website verwendet <strong>keine Tracking-Cookies, keine Werbe-Tracker und keine Analyse-Dienste</strong>. Es werden keinerlei personenbezogene Nutzungsprofile erstellt. Daher ist kein Cookie-Consent-Banner erforderlich.
             </p>
           </div>
 
@@ -716,7 +714,7 @@
 
           <div class="space-y-2">
             <h2 class="font-mono text-xs text-gold font-semibold uppercase">2. Hosting & Server-Logfiles</h2>
-            <p class="text-sec">Diese Website wird als statische Seite gehostet. Beim Aufruf werden technisch notwendige Verbindungsdaten (IP-Adresse, Zeitpunkt, Browsertyp) zur sicheren Auslieferung verarbeitet (Art. 6 Abs. 1 lit. f DSGVO). Hoster ist GitHub Pages (GitHub, Inc./Microsoft, USA; Datenübermittlung auf Grundlage des EU-US Data Privacy Framework*). Zusätzlich lädt diese Seite derzeit das Stylesheet-Framework Tailwind von cdn.tailwindcss.com; dabei wird Ihre IP-Adresse an den Anbieter übermittelt. [Vor Livegang durch lokales Hosting ersetzen und diesen Satz streichen.]</p>
+            <p class="text-sec">Diese Website wird als statische Seite gehostet. Beim Aufruf werden technisch notwendige Verbindungsdaten (IP-Adresse, Zeitpunkt, Browsertyp) zur sicheren Auslieferung verarbeitet (Art. 6 Abs. 1 lit. f DSGVO). Hoster ist GitHub Pages (GitHub, Inc./Microsoft, USA; Datenübermittlung auf Grundlage des EU-US Data Privacy Framework*). Schriften, Stylesheets und Skripte werden von derselben Domain geladen; es werden keine Inhalte von Drittservern nachgeladen. Es werden keine Cookies gesetzt und keine Daten im Browser gespeichert.</p>
           </div>
 
           <div class="space-y-2">
@@ -725,8 +723,13 @@
           </div>
 
           <div class="space-y-2">
-            <h2 class="font-mono text-xs text-gold font-semibold uppercase">4. Ihre Betroffenenrechte</h2>
-            <p class="text-sec">Sie haben jederzeit das Recht auf Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung, Datenübertragbarkeit sowie Widerspruch (Art. 15–21 DSGVO) und ein Beschwerderecht bei einer Datenschutz-Aufsichtsbehörde (Art. 77 DSGVO).</p>
+            <h2 class="font-mono text-xs text-gold font-semibold uppercase">4. Externe Links</h2>
+            <p class="text-sec">Diese Seite verlinkt auf externe Websites (z. B. einfy.de). Beim Klick verlassen Sie diese Seite; für die dortige Datenverarbeitung ist der jeweilige Betreiber verantwortlich.</p>
+          </div>
+
+          <div class="space-y-2">
+            <h2 class="font-mono text-xs text-gold font-semibold uppercase">5. Ihre Betroffenenrechte</h2>
+            <p class="text-sec">Sie haben jederzeit das Recht auf Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung, Datenübertragbarkeit sowie Widerspruch (Art. 15–21 DSGVO) und ein Beschwerderecht bei einer Datenschutz-Aufsichtsbehörde (Art. 77 DSGVO), z. B. der für meinen Wohnsitz zuständigen Landesbehörde [Behörde Ihres Bundeslandes eintragen]. Eine erteilte Einwilligung können Sie jederzeit mit Wirkung für die Zukunft widerrufen.</p>
           </div>
         </div>
       </div>

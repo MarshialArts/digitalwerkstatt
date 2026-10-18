@@ -190,3 +190,21 @@ body {
   z-index: 9999;
   will-change: transform, opacity;
 }
+/* Auswahl-Pillen (Beratung / Projektleitung) */
+.scope-btn {
+  padding: 0.55rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 11px;
+  line-height: 1.15;
+  font-weight: 500;
+  text-align: center;
+  color: var(--text-secondary, inherit);
+  transition: all 0.25s ease;
+}
+.scope-btn.scope-on {
+  background: linear-gradient(135deg, var(--gold-primary), var(--gold-bright));
+  color: #111113;
+}
+@media (min-width: 640px) {
+  .scope-btn { padding: 0.4rem 1rem; font-size: 12px; }
+}
