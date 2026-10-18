@@ -485,10 +485,9 @@ const amgData = {
     copy: 'Technische Projektleitung im Karosserierohbau (Body-in-White) mit ausgewiesener Spezialität im Bereich Großguss (Mega-/Giga-Casting) sowie komplexer Unterboden- und Heckwagenstrukturen – von der Konzeptphase über die internationale Lieferantensteuerung bis zur Serienreife.',
     s1: 'Rohbau & Großguss',
     s2: 'Audi, VW, Rivian u.a.',
-    img: 'img/amg_heckwagen.jpg?v=2',
+    img: 'img/amg_heckwagen.jpg?v=3',
     cap: 'Mercedes-AMG GT 4-Türer Coupé',
-    sub: 'Referenzbeispiel: Mercedes-AMG GT 4-Türer',
-    showOverlay: false
+    sub: 'Referenzbeispiel: Mercedes-AMG GT 4-Türer'
   },
   overall: {
     tag: 'SCHWERPUNKT // GESAMTFAHRZEUG',
@@ -496,10 +495,9 @@ const amgData = {
     copy: 'Baugruppenübergreifende Steuerung im Gesamtfahrzeug: Technisches Schnittstellenmanagement, Digital Mockup (DMU) und geometrische Absicherung, Reifegradmanagement sowie internationale Erprobungs- und Anlaufkoordination.',
     s1: 'Schnittstellen & DMU',
     s2: 'OEM-Reifegradsteuerung',
-    img: 'img/saleen_gesamt.jpg?v=2',
+    img: 'img/saleen_gesamt.jpg?v=3',
     cap: 'Gesamtfahrzeug-Entwicklung · Saleen S1',
-    sub: 'Referenzbeispiel: Saleen Gesamtfahrzeug',
-    showOverlay: false
+    sub: 'Referenzbeispiel: Saleen Gesamtfahrzeug'
   },
   uav: {
     tag: 'SCHWERPUNKT // DROHNEN & C-UAS',
@@ -509,8 +507,7 @@ const amgData = {
     s2: '7+ Jahre Flugpraxis',
     img: 'img/cuas.jpg',
     cap: 'C-UAS · Drohnenabwehr',
-    sub: 'Drohnen- & C-UAS-Projekte',
-    showOverlay: false
+    sub: 'Drohnen- & C-UAS-Projekte'
   }
 };
 
@@ -531,14 +528,12 @@ function setAmgScope(key) {
   const copyEl = document.getElementById('amgScopeCopy');
   const s1El = document.getElementById('amgStat1');
   const s2El = document.getElementById('amgStat2');
-  const svgEl = document.getElementById('amgOverlaySvg');
 
   if (tagEl) tagEl.textContent = d.tag;
   if (headEl) headEl.textContent = d.heading;
   if (copyEl) copyEl.textContent = d.copy;
   if (s1El) s1El.textContent = d.s1;
   if (s2El) s2El.textContent = d.s2;
-  if (svgEl) svgEl.style.opacity = d.showOverlay ? '1' : '0';
 
   const photoEl = document.getElementById('amgPhoto');
   const capEl = document.getElementById('amgCaption');
@@ -792,6 +787,7 @@ function initCardFocus() {
 window.addEventListener('DOMContentLoaded', () => {
   initTheme();
   initCardFocus();
+  setAmgScope('rohbau');
   resizeBgCanvas();
   showView(viewFromHash());
   resizeCanvas();
