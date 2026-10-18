@@ -255,8 +255,8 @@
 
         </div>
 
-        <!-- PROJEKTVORSCHAU -->
-        <div class="ios-card p-6 sm:p-8 mb-12">
+        <!-- PROJEKTVORSCHAU (ausgeblendet, wird später gefüllt; "hidden" entfernen zum Anzeigen) -->
+        <div class="hidden ios-card p-6 sm:p-8 mb-12">
           <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
             <div>
               <span class="font-mono text-xs text-gold font-semibold uppercase tracking-wider">Showreel & Einblicke</span>
@@ -367,28 +367,23 @@
             <div class="lg:col-span-5 space-y-2.5">
               <button onclick="selectAiMod(0)" id="aimod-0" class="aimod-btn w-full text-left p-4 ios-solid border-[#D4AF37] transition-all">
                 <span class="font-mono text-[11px] text-gold font-semibold">SCHWERPUNKT 01</span>
-                <h4 class="font-bold text-sm mt-0.5">Bedarfsanalyse & Prompt-Systeme</h4>
-                <p class="text-xs text-sec mt-1">Strukturierte KI-Integration für Projektarbeit, Technik & Management.</p>
+                <h4 class="font-bold text-sm mt-0.5">Bedarfsanalyse</h4>
+                <p class="text-xs text-sec mt-1">Individuelle Bedarfsanalyse für Ihren Anwendungsfall.</p>
               </button>
               <button onclick="selectAiMod(1)" id="aimod-1" class="aimod-btn w-full text-left p-4 ios-solid transition-all">
                 <span class="font-mono text-[11px] text-mut font-semibold">SCHWERPUNKT 02</span>
-                <h4 class="font-bold text-sm mt-0.5">Lokale KI & Generative Medien</h4>
-                <p class="text-xs text-sec mt-1">Einrichtung von ComfyUI, lokalen Modellen & Bild-/Video-Pipelines direkt auf Ihrem System.</p>
-              </button>
-              <button onclick="selectAiMod(2)" id="aimod-2" class="aimod-btn w-full text-left p-4 ios-solid transition-all">
-                <span class="font-mono text-[11px] text-mut font-semibold">SCHWERPUNKT 03</span>
-                <h4 class="font-bold text-sm mt-0.5">Automatisierung & Custom AI-Tools</h4>
-                <p class="text-xs text-sec mt-1">Technische Blockaden lösen und maßgeschneiderte Assistenten aufbauen.</p>
+                <h4 class="font-bold text-sm mt-0.5">EU AI Act & Datenschutz</h4>
+                <p class="text-xs text-sec mt-1">Pflichten, Fristen und praktische Umsetzung im Unternehmen.</p>
               </button>
             </div>
 
             <div class="lg:col-span-7 ios-solid p-6 space-y-5">
               <div class="flex items-center justify-between">
-                <span id="aiTitle" class="font-mono text-xs font-semibold text-gold">SCHWERPUNKT 01 // BEDARFSANALYSE & WORKFLOW</span>
+                <span id="aiTitle" class="font-mono text-xs font-semibold text-gold">SCHWERPUNKT 01 // BEDARFSANALYSE</span>
                 <span id="aiBadge" class="font-mono text-xs px-3 py-1 rounded-full ios-pill">Video-Call & Vor Ort</span>
               </div>
               <p id="aiDesc" class="text-sm text-sec leading-relaxed">
-                Nach dem kurzen Gratis-Call zum Kennenlernen Ihres Bedarfs entwickeln wir wiederverwendbare Prompt-Architekturen und Workflows, die sofort verlässliche Ergebnisse liefern.
+                Professionell und individuell gestaltetes Coaching auf Ihren Anwendungsfall, inkl. Prompts und Tools. Grundlagen, effiziente Foto- und Videoerstellung und mehr.
               </p>
               <div id="aiLoader" class="hidden space-y-1.5">
                 <div class="flex justify-between font-mono text-[11px] text-[#8B5CF6]">
@@ -574,13 +569,21 @@
             <div class="ios-card p-7 sm:p-9 space-y-5">
               <span class="font-mono text-xs text-gold font-semibold">ÜBER MICH · MARCEL HÜBNER</span>
               <h1 class="text-3xl font-bold tracking-tight">Ingenieurskunst trifft digitale Praxis.</h1>
+              <div class="flex flex-col sm:flex-row gap-5 items-start">
+              <img src="img/profil-beispiel.svg" alt="Beispielfoto Marcel Hübner" width="160" height="160" class="w-32 h-32 sm:w-40 sm:h-40 rounded-3xl object-cover shrink-0 border border-white/10" />
               <p class="text-sm sm:text-base text-sec leading-relaxed">
-                Hinter der <strong>digitalwerkstatt</strong> stehen ein Maschinenbau- und International-Management-Studium (B.Eng. & M.Sc.), zehn Jahre Erfahrung in der internationalen Automobilindustrie sowie zertifizierte KI-, Drohnen- und C-UAS-Expertise.
+                Hinter der <strong>digitalwerkstatt</strong> stehen ein Ingenieurstudium mit zwei Master-Abschlüssen, zehn Jahre Erfahrung in der internationalen Automobilindustrie sowie zertifizierte KI-, Drohnen- und C-UAS-Expertise.
               </p>
+              </div>
               <div class="grid sm:grid-cols-2 gap-3 pt-2">
-                <div class="ios-solid p-4">
+                <div class="ios-solid p-4 sm:col-span-2">
                   <span class="font-mono text-[10px] text-gold font-semibold">AUSBILDUNG</span>
-                  <p class="text-sm font-bold mt-0.5">B.Eng. Maschinenbau & M.Sc. Management</p>
+                  <ul class="text-sm font-bold mt-1 space-y-0.5">
+                    <li>B.Eng. Maschinenbau</li>
+                    <li>M.Sc. Systems Engineering</li>
+                    <li>M.Sc. Engineering Management</li>
+                    <li>AI-Manager Weiterbildung</li>
+                  </ul>
                 </div>
                 <div class="ios-solid p-4">
                   <span class="font-mono text-[10px] text-gold font-semibold">AUTOMOTIVE & UAV</span>
