@@ -433,48 +433,54 @@ function toggleMobileMenu() {
   if (menu) menu.classList.toggle('hidden');
 }
 
-// 5. Subpage 01: Beratung (KI-Consulting) Sandbox
-const aiMods = [
-  {
-    title: 'SCHWERPUNKT 01 // BEDARFSANALYSE & WORKFLOW',
-    badge: 'Gratis-Call + Live-Setup',
-    desc: 'Nach einem kurzen Gratis-Call zum Abstecken Ihres Bedarfs entwickeln wir per Video-Call oder vor Ort wiederverwendbare Prompt-Architekturen und Vorlagen.'
+// 5. Subpage 01: Beratung
+const SCOPE_ON = 'scope-btn scope-on';
+const SCOPE_OFF = 'scope-btn';
+
+const aiData = {
+  bedarf: {
+    tag: 'SCHWERPUNKT // BEDARFSANALYSE',
+    heading: 'Bedarfsanalyse',
+    copy: 'Individuelle Bedarfsanalyse für Ihren Anwendungsfall. Professionell und individuell gestaltetes Coaching auf Ihren Anwendungsfall, inkl. Prompts und Tools. Grundlagen, effiziente Foto- und Videoerstellung und mehr.',
+    chips: ['Individuelles Coaching', 'Prompts & Vorlagen', 'Tools & Workflows', 'KI-Grundlagen', 'Foto- & Videoerstellung'],
+    l1: 'FORMAT', s1: 'Individuell, 1:1',
+    l2: 'ORT', s2: 'Video-Call oder vor Ort'
   },
-  {
-    title: 'SCHWERPUNKT 02 // LOKALE KI & MEDIEN',
-    badge: 'Auf Ihrem System',
-    desc: 'Gemeinsame Einrichtung lokaler KI-Modelle (ComfyUI, Flux, Ollama/LM Studio) für datenschutzkonforme Text-, Bild- und Videogenerierung ohne Abo-Zwang.'
-  },
-  {
-    title: 'SCHWERPUNKT 03 // AUTOMATISIERUNG',
-    badge: 'Video-Call oder Vor Ort',
-    desc: 'Wir lösen technische Blockaden und verbinden Ihre bestehenden Tools direkt vor Ort oder remote mit maßgeschneiderten KI-Assistenten.'
+  aiact: {
+    tag: 'SCHWERPUNKT // EU AI ACT & DATENSCHUTZ',
+    heading: 'EU AI Act & Datenschutz',
+    copy: 'Der EU AI Act (Verordnung (EU) 2024/1689) ist der erste umfassende Rechtsrahmen für KI und gilt gestaffelt. Verbote bestimmter KI-Praktiken und die Pflicht zur KI-Kompetenz (Art. 4) gelten bereits seit Februar 2025; weitere Pflichten folgen schrittweise. Wir klären, welche Rolle Ihr Unternehmen hat, welche Fristen für Sie gelten und wie KI-Einsatz und DSGVO praktisch zusammenpassen.',
+    chips: ['KI-Kompetenz (Art. 4)', 'Rollen & Pflichten', 'Fristen & Stufen', 'KI und DSGVO', 'Praxisumsetzung'],
+    l1: 'ZIEL', s1: 'Orientierung & Umsetzung',
+    l2: 'HINWEIS', s2: 'Keine Rechtsberatung'
   }
-];
-let curAi = 0;
+};
 
-function selectAiMod(idx) {
-  curAi = idx;
-  document.querySelectorAll('.aimod-btn').forEach((b, i) => {
-    b.style.borderColor = (i === idx) ? '#D4AF37' : '';
+function setAiScope(key) {
+  Object.keys(aiData).forEach(k => {
+    const btn = document.getElementById('ai-btn-' + k);
+    if (btn) btn.className = (k === key) ? SCOPE_ON : SCOPE_OFF;
   });
-  runAiDemo();
-}
-
-function runAiDemo() {
-  const loader = document.getElementById('aiLoader');
-  if (!loader) return;
-  loader.classList.remove('hidden');
-  setTimeout(() => {
-    const m = aiMods[curAi];
-    const titleEl = document.getElementById('aiTitle');
-    const badgeEl = document.getElementById('aiBadge');
-    const descEl = document.getElementById('aiDesc');
-    if (titleEl) titleEl.textContent = m.title;
-    if (badgeEl) badgeEl.textContent = m.badge;
-    if (descEl) descEl.textContent = m.desc;
-    loader.classList.add('hidden');
-  }, 420);
+  const d = aiData[key];
+  if (!d) return;
+  const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  set('aiTag', d.tag);
+  set('aiHeading', d.heading);
+  set('aiCopy', d.copy);
+  set('aiStat1Label', d.l1);
+  set('aiStat1', d.s1);
+  set('aiStat2Label', d.l2);
+  set('aiStat2', d.s2);
+  const chips = document.getElementById('aiChips');
+  if (chips) {
+    chips.textContent = '';
+    d.chips.forEach(c => {
+      const span = document.createElement('span');
+      span.className = 'px-3.5 py-1.5 ios-pill font-mono text-xs font-semibold border border-[#D4AF37]/40';
+      span.textContent = c;
+      chips.appendChild(span);
+    });
+  }
 }
 
 // 6. Subpage 02: Projektleitung (Rohbau inkl. Großguss, Gesamtfahrzeug inkl. DMU & Schnittstellen, Drohnen inkl. C-UAS)
@@ -485,9 +491,9 @@ const amgData = {
     copy: 'Technische Projektleitung im Karosserierohbau (Body-in-White) mit ausgewiesener Spezialität im Bereich Großguss (Mega-/Giga-Casting) sowie komplexer Unterboden- und Heckwagenstrukturen – von der Konzeptphase über die internationale Lieferantensteuerung bis zur Serienreife.',
     s1: 'Rohbau & Großguss',
     s2: 'Audi, VW, Rivian u.a.',
-    img: 'img/amg_heckwagen.jpg?v=3',
-    cap: 'Mercedes-AMG GT 4-Türer Coupé',
-    sub: 'Referenzbeispiel: Mercedes-AMG GT 4-Türer'
+    img: 'img/caxray_v1.jpg?v=1',
+    cap: 'KI-generierte Illustration',
+    sub: 'Karosserierohbau & Heckwagenstruktur'
   },
   overall: {
     tag: 'SCHWERPUNKT // GESAMTFAHRZEUG',
@@ -495,9 +501,9 @@ const amgData = {
     copy: 'Baugruppenübergreifende Steuerung im Gesamtfahrzeug: Technisches Schnittstellenmanagement, Digital Mockup (DMU) und geometrische Absicherung, Reifegradmanagement sowie internationale Erprobungs- und Anlaufkoordination.',
     s1: 'Schnittstellen & DMU',
     s2: 'OEM-Reifegradsteuerung',
-    img: 'img/saleen_gesamt.jpg?v=3',
-    cap: 'Gesamtfahrzeug-Entwicklung · Saleen S1',
-    sub: 'Referenzbeispiel: Saleen Gesamtfahrzeug'
+    img: 'img/gesamtfahrzeug_v1.jpg?v=1',
+    cap: 'Gesamtfahrzeug-Entwicklung',
+    sub: 'KI-generierte Illustration'
   },
   uav: {
     tag: 'SCHWERPUNKT // DROHNEN & C-UAS',
@@ -507,7 +513,7 @@ const amgData = {
     s2: '7+ Jahre Flugpraxis',
     img: 'img/cuas.jpg',
     cap: 'C-UAS · Drohnenabwehr',
-    sub: 'Drohnen- & C-UAS-Projekte'
+    sub: 'KI-generierte Illustration'
   }
 };
 
@@ -516,8 +522,8 @@ function setAmgScope(key) {
     const btn = document.getElementById('amg-btn-' + k);
     if (btn) {
       btn.className = (k === key)
-        ? 'px-4 py-1.5 rounded-full text-xs font-medium btn-gold'
-        : 'px-4 py-1.5 rounded-full text-xs font-medium text-sec';
+        ? SCOPE_ON
+        : SCOPE_OFF;
     }
   });
   const d = amgData[key];
@@ -788,6 +794,7 @@ window.addEventListener('DOMContentLoaded', () => {
   initTheme();
   initCardFocus();
   setAmgScope('rohbau');
+  setAiScope('bedarf');
   resizeBgCanvas();
   showView(viewFromHash());
   resizeCanvas();
