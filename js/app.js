@@ -351,8 +351,8 @@ function renderAmbientBg() {
   requestAnimationFrame(renderAmbientBg);
 }
 
-// 3b. Intro: 3D-Neuronalnetz, Kamera fliegt hindurch, Iris-Übergang gibt die Seite frei (Einstellungen: INTRO_MS)
-const INTRO_MS = 2100;
+// 3b. Intro: Kamera taucht in ein 3D-Neuronalnetz ein und findet am Ende ein leuchtendes Fenster: die Seite (Einstellung: INTRO_MS)
+const INTRO_MS = 1600;
 function runIntro() {
   const cv = document.getElementById('introNet');
   if (!cv) return;
@@ -367,12 +367,16 @@ function runIntro() {
   const small = W < 640;
   let seed = 11;
   const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+  const ease = v => { v = Math.max(0, Math.min(1, v)); return v * v * (3 - 2 * v); };
+  const cl = v => Math.max(0, Math.min(1, v));
+  const F = Math.min(W, H) * 0.95;
 
-  // Schichten entlang z; Kamera startet davor und fliegt hindurch
-  const LAYERS = 10, GAP = 150, ZLEN = (LAYERS - 1) * GAP;
+  // Schichten entlang z, am Ende das Portal (Seitenformat = Fenster), dessen Rand Teil des Netzes ist
+  const LAYERS = 9, GAP = 150, ZLEN = (LAYERS - 1) * GAP, PZ = -ZLEN - 300;
+  const cy0 = -ZLEN / 2;
   const nodes = [], layerIdx = [];
   for (let l = 0; l < LAYERS; l++) {
-    const n = (small ? 9 : 15) + Math.floor(rnd() * 6);
+    const n = (small ? 9 : 14) + Math.floor(rnd() * 5);
     const R = 150 + Math.sin(l / (LAYERS - 1) * Math.PI) * 170;
     layerIdx.push([]);
     for (let i = 0; i < n; i++) {
@@ -381,17 +385,23 @@ function runIntro() {
       layerIdx[l].push(nodes.length - 1);
     }
   }
+  const hw = W / 2, hh = H / 2;
+  const anchorIdx = [];
+  [[-1, -1], [0, -1], [1, -1], [1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0]].forEach(([ax, ay]) => {
+    nodes.push({ x: ax * hw, y: ay * hh, z: PZ, l: LAYERS, out: [], portal: true });
+    anchorIdx.push(nodes.length - 1);
+  });
   const edges = [];
+  const link = (i, j) => { edges.push({ a: i, b: j }); nodes[i].out.push(edges.length - 1); };
   layerIdx.forEach((ids, l) => {
-    if (l === LAYERS - 1) return;
+    const next = l < LAYERS - 1 ? layerIdx[l + 1] : anchorIdx;
     ids.forEach(i => {
-      const near = layerIdx[l + 1].map(j => [j, Math.hypot(nodes[i].x - nodes[j].x, nodes[i].y - nodes[j].y)])
-        .sort((p, q) => p[1] - q[1]).slice(0, small ? 2 : 3);
-      near.forEach(([j]) => { edges.push({ a: i, b: j }); nodes[i].out.push(edges.length - 1); });
+      next.map(j => [j, Math.hypot(nodes[i].x - nodes[j].x, nodes[i].y - nodes[j].y)])
+        .sort((p, q) => p[1] - q[1]).slice(0, small ? 2 : 3).forEach(([j]) => link(i, j));
     });
   });
+  for (let k = 0; k < anchorIdx.length; k++) link(anchorIdx[k], anchorIdx[(k + 1) % anchorIdx.length]);   // Fensterrahmen
 
-  // Glow-Sprite
   const spr = document.createElement('canvas'); spr.width = spr.height = 64;
   const sg = spr.getContext('2d');
   const grd = sg.createRadialGradient(32, 32, 0, 32, 32, 32);
@@ -400,18 +410,12 @@ function runIntro() {
   grd.addColorStop(1, 'rgba(212,175,55,0)');
   sg.fillStyle = grd; sg.fillRect(0, 0, 64, 64);
 
-  // Signale, die über die Kanten laufen
   const pulses = [];
   const fire = (ei, delay) => pulses.push({ e: ei, p: -(delay || 0), v: 0.9 + rnd() * 0.9 });
-  for (let i = 0; i < (small ? 14 : 28); i++) fire(Math.floor(rnd() * edges.length), rnd() * 0.9);
+  for (let i = 0; i < (small ? 14 : 28); i++) fire(Math.floor(rnd() * edges.length), rnd() * 0.6);
 
-  const ease = v => { v = Math.max(0, Math.min(1, v)); return v * v * (3 - 2 * v); };
-  const cl = v => Math.max(0, Math.min(1, v));
-  const F = Math.min(W, H) * 0.95;
-  const cy0 = -ZLEN / 2;
   const t0 = performance.now();
-  let last = t0, done = false;
-
+  let last = t0, done = false, first = true;
   function finish() {
     if (done) return; done = true;
     document.body.classList.remove('intro-pre');
@@ -422,19 +426,21 @@ function runIntro() {
   function frame(now) {
     if (done) return;
     const t = now - t0, dt = Math.min(0.05, (now - last) / 1000); last = now;
-    const u = t / INTRO_MS;
-    const dolly = ease((u - 0.25) / 0.65);                    // ab ~25 %: Kamera fliegt hindurch
-    const camZ = 520 - (520 + ZLEN + 160) * (dolly * dolly * 0.55 + dolly * 0.45);
-    const yaw = (1 - ease(u / 0.55)) * 0.7 - 0.12;             // Einschwenken aus seitlichem Blick
+    const u = window.__u !== undefined ? window.__u : t / INTRO_MS;
+    const dv = cl((u - 0.1) / 0.9);
+    const dolly = Math.pow(dv, 1.9);                            // beschleunigt in das Netz hinein
+    const camZ0 = 520, camZ1 = PZ + F * 0.5;                    // Ende: Portal füllt den Bildschirm
+    const camZ = camZ0 + (camZ1 - camZ0) * dolly;
+    const yaw = (1 - ease(u / 0.5)) * 0.65;                     // seitlicher Blick schwenkt gerade
     const cyaw = Math.cos(yaw), syaw = Math.sin(yaw);
-    const boot = ease(u / 0.3);                                 // Schichten blenden von der Mitte aus auf
+    const boot = ease(u / 0.2);
 
     g.globalCompositeOperation = 'source-over';
+    g.globalAlpha = 1;
     const bg = g.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, Math.max(W, H) * 0.75);
     bg.addColorStop(0, '#15120a'); bg.addColorStop(1, '#050506');
     g.fillStyle = bg; g.fillRect(0, 0, W, H);
 
-    // Projektion
     const P = nodes.map(n => {
       const dx = n.x, dz = n.z - cy0;
       const x1 = dx * cyaw - dz * syaw, z1 = dz * cyaw + dx * syaw + cy0;
@@ -442,36 +448,36 @@ function runIntro() {
       const s = F / Math.max(d, 1);
       return { px: W / 2 + x1 * s, py: H / 2 + n.y * s, d, s, vis: d > 40 };
     });
-    const fog = d => cl(1 - (d - 200) / 1500);
+    const fog = d => cl(1 - (d - 200) / 1700);
+    const lbOf = n => n.portal ? 1 : cl(boot * 1.6 - Math.abs(n.l - 4) / 6);
 
     g.globalCompositeOperation = 'lighter';
     g.lineCap = 'round';
-    edges.forEach((e, i) => {
+    edges.forEach(e => {
       const A = P[e.a], B = P[e.b];
       if (!A.vis || !B.vis) return;
-      const lb = cl(boot * 1.6 - Math.abs(nodes[e.a].l - 4.5) / 6);
-      const al = 0.38 * Math.min(fog(A.d), fog(B.d)) * lb;
+      const na = nodes[e.a], nb = nodes[e.b];
+      const frame_ = na.portal && nb.portal;
+      const al = (frame_ ? 0.85 : 0.38) * Math.min(fog(A.d), fog(B.d)) * Math.min(lbOf(na), lbOf(nb)) * (frame_ ? ease((u - 0.2) / 0.25) : 1);
       if (al < 0.01) return;
-      g.strokeStyle = 'rgba(212,175,55,' + al + ')';
-      g.lineWidth = Math.max(0.5, 1.1 * (A.s + B.s) * 0.5 * 1.5);
+      g.strokeStyle = 'rgba(' + (frame_ ? '255,226,140' : '212,175,55') + ',' + al + ')';
+      g.lineWidth = Math.max(0.5, (frame_ ? 2.2 : 1.1) * (A.s + B.s) * 0.75);
       g.beginPath(); g.moveTo(A.px, A.py); g.lineTo(B.px, B.py); g.stroke();
     });
 
     nodes.forEach((n, i) => {
       const q = P[i];
       if (!q.vis) return;
-      const lb = cl(boot * 1.6 - Math.abs(n.l - 4.5) / 6);
-      const al = fog(q.d) * lb;
+      const al = fog(q.d) * lbOf(n);
       if (al < 0.02) return;
-      const sz = Math.min(120, 16 * q.s * 2.2 + 3);
+      const sz = Math.min(120, 16 * q.s * 2.2 + 3) * (n.portal ? 1.5 : 1);
       g.globalAlpha = Math.min(1, al * 1.3);
       g.drawImage(spr, q.px - sz / 2, q.py - sz / 2, sz, sz);
     });
 
-    // Signale
     for (let i = pulses.length - 1; i >= 0; i--) {
       const pl = pulses[i];
-      pl.p += dt * pl.v * 1.6;
+      pl.p += dt * pl.v * 2.2;
       if (pl.p < 0) continue;
       if (pl.p >= 1) {
         const nx = nodes[edges[pl.e].b].out;
@@ -490,8 +496,25 @@ function runIntro() {
     }
     g.globalAlpha = 1;
 
-    // heller Blitz kurz vor dem Durchbruch
-    const flash = cl(1 - Math.abs(u - 0.78) / 0.14) * 0.5;
+    // Portal: Fenster zur Seite, wird im Anflug heller (Seite scheint durch)
+    const ca = ease((u - 0.25) / 0.45);
+    const corner = [[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([ax, ay]) => {
+      const dz = PZ - cy0, dx = ax * hw;
+      const x1 = dx * cyaw - dz * syaw, z1 = dz * cyaw + dx * syaw + cy0;
+      const s = F / Math.max(camZ - z1, 1);
+      return [W / 2 + x1 * s, H / 2 + ay * hh * s];
+    });
+    if (ca > 0.01 && camZ - PZ > 40) {
+      g.globalCompositeOperation = 'destination-out';
+      g.fillStyle = 'rgba(0,0,0,' + (ca * 0.97) + ')';
+      g.beginPath(); corner.forEach((c, k) => (k ? g.lineTo(c[0], c[1]) : g.moveTo(c[0], c[1]))); g.closePath(); g.fill();
+    } else if (camZ - PZ <= 40) {
+      g.globalCompositeOperation = 'destination-out';
+      g.fillStyle = '#000'; g.fillRect(0, 0, W, H);
+    }
+
+    // Lichtblitz beim Eintauchen
+    const flash = cl(1 - Math.abs(u - 0.86) / 0.12) * 0.35;
     if (flash > 0) {
       g.globalCompositeOperation = 'lighter';
       const fg = g.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, Math.max(W, H) * 0.6);
@@ -499,13 +522,9 @@ function runIntro() {
       g.fillStyle = fg; g.fillRect(0, 0, W, H);
     }
 
-    // Iris: ein Loch wächst aus der Mitte, dahinter erscheint die Seite
-    const irisK = ease((u - 0.62) / 0.38);
-    const diag = Math.hypot(W, H) / 2;
-    cv.style.setProperty('--r', (-100 + irisK * (diag + 220)) + 'px');
-    if (u > 0.5 && document.body.classList.contains('intro-pre')) document.body.classList.remove('intro-pre');
-
-    if (u < 1) requestAnimationFrame(frame); else finish();
+    if (first) { first = false; cv.style.background = 'none'; }
+    if (u > 0.3 && document.body.classList.contains('intro-pre')) document.body.classList.remove('intro-pre');
+    if (u < 1 || window.__u !== undefined) requestAnimationFrame(frame); else finish();
   }
   requestAnimationFrame(frame);
 }
