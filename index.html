@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>digitalwerkstatt — Beratung | Projektleitung | Digitalisierung</title>
-  <meta name="description" content="Ingenieurskunst trifft digitale Praxis: KI-Beratung, technische Projektleitung (Automotive & UAV/C-UAS) und 3D-/Video-Digitalisierung." />
+  <title>digitalwerkstatt Hübner — KI-Beratung | Digitale Medien | Digitalisierung &amp; Projektleitung</title>
+  <meta name="description" content="Ingenieurskunst trifft digitale Praxis: KI-Beratung, digitale Medien (UGC, Foto, Video) sowie 3D-Digitalisierung, Drohnen und Automotive-Projektleitung." />
 
   <!-- Dynamic SVG Favicon (Gold/Black 'dw' Badge) -->
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='46' fill='%23111113' stroke='%23D4AF37' stroke-width='6'/><text x='50' y='62' font-family='monospace' font-size='38' font-weight='bold' fill='%23F5F5F7' text-anchor='middle'>dw</text></svg>" />
@@ -16,6 +16,9 @@
   <link rel="stylesheet" href="css/styles.css" />
 </head>
 <body class="min-h-screen flex flex-col selection:bg-[#D4AF37] selection:text-[#111113]">
+
+  <!-- INTRO: neuronales Netz zieht sich nach außen zurück (JS entfernt das Element) -->
+  <canvas id="introNet" aria-hidden="true"></canvas>
 
   <!-- BACKGROUND CANVAS FOR PILLAR CARD HOVER EFFECTS -->
   <canvas id="ambientBgCanvas"></canvas>
@@ -37,7 +40,7 @@
         </div>
         <div>
           <span class="font-semibold tracking-tight text-base sm:text-lg block leading-none">
-            digital<span class="text-gold font-normal">werkstatt</span>
+            digital<span class="text-gold font-normal">werkstatt</span> <span class="font-normal">Hübner</span>
           </span>
           <span class="font-mono text-[10px] text-mut tracking-wider uppercase block mt-0.5">
             AI · Engineering · 3D
@@ -46,18 +49,18 @@
       </button>
 
       <!-- iOS Segmented Control Navigation -->
-      <nav class="hidden md:flex items-center gap-1 p-1 ios-pill">
+      <nav class="hidden lg:flex items-center gap-1 p-1 ios-pill">
         <button onclick="navigateTo('home')" data-nav="home" class="nav-pill px-4 py-1.5 rounded-full text-xs font-medium transition-all">
           Start
         </button>
         <button onclick="navigateTo('consulting')" data-nav="consulting" class="nav-pill px-4 py-1.5 rounded-full text-xs font-medium transition-all">
           01. Beratung
         </button>
-        <button onclick="navigateTo('projektleitung')" data-nav="projektleitung" class="nav-pill px-4 py-1.5 rounded-full text-xs font-medium transition-all">
-          02. Projektleitung
+        <button onclick="navigateTo('medien')" data-nav="medien" class="nav-pill px-4 py-1.5 rounded-full text-xs font-medium transition-all">
+          02. Digitale Medien
         </button>
-        <button onclick="navigateTo('digitalisierung')" data-nav="digitalisierung" class="nav-pill px-4 py-1.5 rounded-full text-xs font-medium transition-all">
-          03. Digitalisierung
+        <button onclick="navigateTo('projektleitung')" data-nav="projektleitung" class="nav-pill px-4 py-1.5 rounded-full text-xs font-medium transition-all">
+          03. Digitalisierung & Projekt
         </button>
         <button onclick="navigateTo('founder')" data-nav="founder" class="nav-pill px-4 py-1.5 rounded-full text-xs font-medium transition-all">
           Profil & Kontakt
@@ -71,7 +74,7 @@
           <span id="themeText">TAG</span>
         </button>
 
-        <button onclick="toggleMobileMenu()" class="md:hidden ios-pill p-2" aria-label="Menü">
+        <button onclick="toggleMobileMenu()" class="lg:hidden ios-pill p-2" aria-label="Menü">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 7h16M4 12h16M4 17h16"/>
           </svg>
@@ -80,21 +83,21 @@
     </div>
 
     <!-- Mobile Menu Sheet -->
-    <div id="mobileMenu" class="hidden md:hidden max-w-6xl mx-auto mt-2 ios-card p-4 space-y-1.5 shadow-xl">
+    <div id="mobileMenu" class="hidden lg:hidden max-w-6xl mx-auto mt-2 ios-card p-4 space-y-1.5 shadow-xl">
       <button onclick="navigateTo('home'); toggleMobileMenu()" class="w-full text-left px-4 py-2.5 rounded-2xl text-sm font-medium flex justify-between items-center hover:bg-black/5 dark:hover:bg-white/5">
         <span>Start & Übersicht</span>
         <span class="font-mono text-xs text-mut">00</span>
       </button>
       <button onclick="navigateTo('consulting'); toggleMobileMenu()" class="w-full text-left px-4 py-2.5 rounded-2xl text-sm font-medium flex justify-between items-center hover:bg-black/5 dark:hover:bg-white/5">
-        <span>Beratung (KI-Consulting)</span>
+        <span>KI-Beratung</span>
         <span class="font-mono text-xs text-gold">01</span>
       </button>
-      <button onclick="navigateTo('projektleitung'); toggleMobileMenu()" class="w-full text-left px-4 py-2.5 rounded-2xl text-sm font-medium flex justify-between items-center hover:bg-black/5 dark:hover:bg-white/5">
-        <span>Projektleitung (Automotive & UAV)</span>
+      <button onclick="navigateTo('medien'); toggleMobileMenu()" class="w-full text-left px-4 py-2.5 rounded-2xl text-sm font-medium flex justify-between items-center hover:bg-black/5 dark:hover:bg-white/5">
+        <span>Digitale Medien</span>
         <span class="font-mono text-xs text-gold">02</span>
       </button>
-      <button onclick="navigateTo('digitalisierung'); toggleMobileMenu()" class="w-full text-left px-4 py-2.5 rounded-2xl text-sm font-medium flex justify-between items-center hover:bg-black/5 dark:hover:bg-white/5">
-        <span>Digitalisierung (3D & Video)</span>
+      <button onclick="navigateTo('projektleitung'); toggleMobileMenu()" class="w-full text-left px-4 py-2.5 rounded-2xl text-sm font-medium flex justify-between items-center hover:bg-black/5 dark:hover:bg-white/5">
+        <span>Digitalisierung & Projektleitung</span>
         <span class="font-mono text-xs text-gold">03</span>
       </button>
       <button onclick="navigateTo('founder'); toggleMobileMenu()" class="w-full text-left px-4 py-2.5 rounded-2xl text-sm font-medium flex justify-between items-center hover:bg-black/5 dark:hover:bg-white/5">
@@ -121,7 +124,7 @@
           </h1>
 
           <p class="text-sec text-base sm:text-lg leading-relaxed max-w-xl mx-auto">
-            Praxisnahe <strong>KI-Beratung</strong>, erfahrene <strong>technische Projektleitung</strong> und präzise <strong>3D- & Video-Digitalisierung</strong>.
+            Praxisnahe <strong>KI-Beratung</strong>, <strong>digitale Medien</strong> sowie <strong>Digitalisierung und Projektleitung</strong>.
           </p>
 
           <div class="flex flex-wrap items-center justify-center gap-3 pt-2">
@@ -144,7 +147,7 @@
                class="ios-card pillar-card p-7 flex flex-col justify-between cursor-pointer group">
             <div>
               <div class="flex items-center justify-between mb-6">
-                <span class="font-mono text-xs font-semibold text-gold">01 // KI-CONSULTING</span>
+                <span class="font-mono text-xs font-semibold text-gold">01 // KI-BERATUNG</span>
                 <div class="pillar-icon w-11 h-11 rounded-2xl ios-solid flex items-center justify-center transition-all">
                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M13 10V3L4 14h7v7l9-11h-7z"/>
@@ -153,63 +156,62 @@
               </div>
 
               <h2 class="text-2xl font-bold mb-1.5">Beratung</h2>
-              <p class="text-xs font-semibold text-gold mb-4 leading-snug">
-                Individuelle Problemlösung statt theoretischer Standardkurse.
+              <p class="text-sm font-semibold text-gold mb-4 leading-snug">
+                Ich zeige dir, wie du KI im Privatleben und als Unternehmer nutzen kannst.
               </p>
-              <p class="text-sec text-sm leading-relaxed mb-6">
-                Wir starten mit einem kurzen Gratis-Call zur Bedarfsanalyse. Danach setzen wir die optimale KI-Lösung gezielt per Video-Call oder direkt bei Ihnen vor Ort um.
-              </p>
+              <ol class="space-y-1.5 mb-6 text-sm text-sec">
+                <li class="flex gap-3"><span class="font-mono text-xs font-bold text-gold pt-0.5">01</span><span>Gratis-Call</span></li>
+                <li class="flex gap-3"><span class="font-mono text-xs font-bold text-gold pt-0.5">02</span><span>Analyse &amp; Konzept</span></li>
+                <li class="flex gap-3"><span class="font-mono text-xs font-bold text-gold pt-0.5">03</span><span>Umsetzung per Video-Call oder vor Ort</span></li>
+              </ol>
             </div>
 
             <div class="pt-4 border-t border-hair flex items-center justify-between gap-2">
               <span class="text-xs font-semibold text-gold leading-tight">
-                Gratis-Call & Beratung ansehen
+                Ablauf &amp; Inhalte ansehen
               </span>
               <span class="pillar-arrow w-8 h-8 shrink-0 rounded-full ios-solid flex items-center justify-center text-xs transition-all">→</span>
             </div>
           </div>
 
-          <!-- KACHEL 02: PROJEKTLEITUNG -->
+          <!-- KACHEL 02: DIGITALE MEDIEN -->
+          <div onclick="navigateTo('medien')"
+               onmouseenter="activateCardBgEffect('digital3d', this)"
+               onmouseleave="deactivateCardBgEffect()"
+               class="ios-card pillar-card p-7 flex flex-col justify-between cursor-pointer group">
+            <div>
+              <div class="flex items-center justify-between mb-6">
+                <span class="font-mono text-xs font-semibold text-gold">02 // DIGITALE MEDIEN</span>
+                <div class="pillar-icon w-11 h-11 rounded-2xl ios-solid flex items-center justify-center transition-all">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 9a2 2 0 012-2h1.5l1.2-2h8.6l1.2 2H19a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+                    <circle cx="12" cy="13" r="3.5" stroke-width="1.8"/>
+                  </svg>
+                </div>
+              </div>
+
+              <h2 class="text-2xl font-bold mb-1.5">Digitale Medien</h2>
+              <p class="text-sm font-semibold text-gold mb-6 leading-snug">
+                UGC-Content, Foto- und Medienproduktion für Social Media oder Webauftritt.
+              </p>
+            </div>
+
+            <div class="pt-4 border-t border-hair flex items-center justify-between gap-2">
+              <span class="text-xs font-semibold text-gold leading-tight">
+                Leistungen ansehen
+              </span>
+              <span class="pillar-arrow w-8 h-8 shrink-0 rounded-full ios-solid flex items-center justify-center text-xs transition-all">→</span>
+            </div>
+          </div>
+
+          <!-- KACHEL 03: DIGITALISIERUNG UND PROJEKTLEITUNG -->
           <div onclick="navigateTo('projektleitung')"
                onmouseenter="activateCardBgEffect('milestones', this)"
                onmouseleave="deactivateCardBgEffect()"
                class="ios-card pillar-card p-7 flex flex-col justify-between cursor-pointer group">
             <div>
               <div class="flex items-center justify-between mb-6">
-                <span class="font-mono text-xs font-semibold text-gold">02 // PROJEKTLEITUNG</span>
-                <div class="pillar-icon w-11 h-11 rounded-2xl ios-solid flex items-center justify-center transition-all">
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"/>
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1"/>
-                  </svg>
-                </div>
-              </div>
-
-              <h2 class="text-2xl font-bold mb-1.5">Projektleitung</h2>
-              <p class="text-xs font-semibold text-gold mb-4 leading-snug">
-                Automotive (Rohbau & Gesamtfahrzeug) sowie Drohnenprojekte.
-              </p>
-              <p class="text-sec text-sm leading-relaxed mb-6">
-                Strukturierte Führung komplexer Entwicklungs- und Technikprojekte nach internationalen OEM-Standards – von der Konzeptphase bis zur Serienreife.
-              </p>
-            </div>
-
-            <div class="pt-4 border-t border-hair flex items-center justify-between gap-2">
-              <span class="text-xs font-semibold text-gold leading-tight">
-                OEM-Erfahrung & Projektumfang
-              </span>
-              <span class="pillar-arrow w-8 h-8 shrink-0 rounded-full ios-solid flex items-center justify-center text-xs transition-all">→</span>
-            </div>
-          </div>
-
-          <!-- KACHEL 03: DIGITALISIERUNG -->
-          <div onclick="navigateTo('digitalisierung')"
-               onmouseenter="activateCardBgEffect('digital3d', this)"
-               onmouseleave="deactivateCardBgEffect()"
-               class="ios-card pillar-card p-7 flex flex-col justify-between cursor-pointer group">
-            <div>
-              <div class="flex items-center justify-between mb-6">
-                <span class="font-mono text-xs font-semibold text-gold">03 // DIGITALISIERUNG</span>
+                <span class="font-mono text-xs font-semibold text-gold">03 // DIGITALISIERUNG &amp; PROJEKT</span>
                 <div class="pillar-icon w-11 h-11 rounded-2xl ios-solid flex items-center justify-center transition-all">
                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5M14 4l-2-1-2 1M4 7l2-1M4 7l2 1M4 7v2.5M12 21l-2-1m2 1l2-1m-2 1v-2.5M6 18l-2-1v-2.5M18 18l2-1v-2.5"/>
@@ -217,18 +219,15 @@
                 </div>
               </div>
 
-              <h2 class="text-2xl font-bold mb-1.5">Digitalisierung</h2>
-              <p class="text-xs font-semibold text-gold mb-4 leading-snug">
-                3D-Scannen großer Objekte, Video & Werbung, Website-Design.
-              </p>
-              <p class="text-sec text-sm leading-relaxed mb-6">
-                Präzise 3D-Punktwolken und digitale Zwillinge aus der Luft kombiniert mit modernem Videomarketing – von der Kameraarbeit und dem Color Grading bis zur fertigen Website.
+              <h2 class="text-2xl font-bold mb-1.5">Digitalisierung und Projektleitung</h2>
+              <p class="text-sm font-semibold text-gold mb-6 leading-snug">
+                3D-Digitalisierung, Drohnen und Automotive-Projektleitung.
               </p>
             </div>
 
             <div class="pt-4 border-t border-hair flex items-center justify-between gap-2">
               <span class="text-xs font-semibold text-gold leading-tight">
-                Interaktiven 3D-Scanner & Media öffnen
+                3D-Scan-Animation &amp; Projekte ansehen
               </span>
               <span class="pillar-arrow w-8 h-8 shrink-0 rounded-full ios-solid flex items-center justify-center text-xs transition-all">→</span>
             </div>
@@ -323,54 +322,55 @@
         <div class="max-w-3xl mb-8 space-y-2">
           <h1 class="text-3xl sm:text-5xl font-bold tracking-tight">KI-Beratung.</h1>
           <p class="text-sec text-base">
-            Individuelle Problemlösung statt theoretischer Standardkurse: persönlich, praxisnah und auf Ihren Anwendungsfall zugeschnitten, per <strong>Video-Call oder vor Ort</strong>.
+            Ich zeige dir, wie du KI im Privatleben und als Unternehmer nutzen kannst: persönlich, praxisnah und auf deinen Anwendungsfall zugeschnitten, per <strong>Video-Call oder vor Ort</strong>.
           </p>
         </div>
 
         <div class="ios-card p-6 sm:p-9 mb-10">
-          <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+          <div class="mb-8">
+            <span class="font-mono text-xs text-gold font-semibold">ABLAUF</span>
+            <ol class="grid md:grid-cols-3 gap-4 mt-3">
+              <li class="ios-solid p-5 flex gap-4">
+                <span class="font-mono text-xs font-bold text-gold pt-0.5">01</span>
+                <div>
+                  <h3 class="text-sm font-bold">Gratis-Call</h3>
+                  <p class="text-xs text-sec mt-0.5">Kurzes, unverbindliches Kennenlernen: Ziel und Bedarf klären.</p>
+                </div>
+              </li>
+              <li class="ios-solid p-5 flex gap-4">
+                <span class="font-mono text-xs font-bold text-gold pt-0.5">02</span>
+                <div>
+                  <h3 class="text-sm font-bold">Analyse &amp; Konzept</h3>
+                  <p class="text-xs text-sec mt-0.5">Dein Anwendungsfall wird eingeordnet, das Vorgehen individuell abgestimmt.</p>
+                </div>
+              </li>
+              <li class="ios-solid p-5 flex gap-4">
+                <span class="font-mono text-xs font-bold text-gold pt-0.5">03</span>
+                <div>
+                  <h3 class="text-sm font-bold">Umsetzung</h3>
+                  <p class="text-xs text-sec mt-0.5">Coaching per Live-Video-Call oder direkt bei dir vor Ort.</p>
+                </div>
+              </li>
+            </ol>
+          </div>
+
+          <div class="flex flex-wrap items-center justify-between gap-4 mb-6 pt-6 border-t border-hair">
             <div>
-              <span class="font-mono text-xs text-gold font-semibold">LEISTUNGSSCHWERPUNKTE</span>
-              <h2 class="text-xl sm:text-2xl font-bold mt-0.5">Bedarfsanalyse, EU AI Act & Datenschutz</h2>
+              <span class="font-mono text-xs text-gold font-semibold">INHALTE</span>
+              <h2 class="text-xl sm:text-2xl font-bold mt-0.5">Bedarfsanalyse, EU AI Act &amp; Datenschutz</h2>
             </div>
 
             <div class="grid grid-cols-2 gap-1 p-1 ios-pill w-full sm:w-auto">
               <button onclick="setAiScope('bedarf')" id="ai-btn-bedarf" class="scope-btn scope-on">Bedarfsanalyse</button>
-              <button onclick="setAiScope('aiact')" id="ai-btn-aiact" class="scope-btn">EU AI Act & Datenschutz</button>
+              <button onclick="setAiScope('aiact')" id="ai-btn-aiact" class="scope-btn">EU AI Act &amp; Datenschutz</button>
             </div>
           </div>
 
           <div class="grid lg:grid-cols-12 gap-7 items-stretch">
             <div class="lg:col-span-7 space-y-4">
-              <div class="ios-solid p-6 space-y-4 h-full">
-                <span class="font-mono text-[11px] text-gold font-semibold uppercase tracking-wider">Ablauf</span>
-                <ol class="space-y-4">
-                  <li class="flex gap-4">
-                    <span class="font-mono text-xs font-bold text-gold pt-0.5">01</span>
-                    <div>
-                      <h3 class="text-sm font-bold">Gratis-Call</h3>
-                      <p class="text-xs text-sec mt-0.5">Kurzes, unverbindliches Kennenlernen: Ziel und Bedarf klären.</p>
-                    </div>
-                  </li>
-                  <li class="flex gap-4">
-                    <span class="font-mono text-xs font-bold text-gold pt-0.5">02</span>
-                    <div>
-                      <h3 class="text-sm font-bold">Analyse & Konzept</h3>
-                      <p class="text-xs text-sec mt-0.5">Ihr Anwendungsfall wird eingeordnet, das Vorgehen individuell abgestimmt.</p>
-                    </div>
-                  </li>
-                  <li class="flex gap-4">
-                    <span class="font-mono text-xs font-bold text-gold pt-0.5">03</span>
-                    <div>
-                      <h3 class="text-sm font-bold">Umsetzung</h3>
-                      <p class="text-xs text-sec mt-0.5">Coaching per Live-Video-Call oder direkt bei Ihnen vor Ort.</p>
-                    </div>
-                  </li>
-                </ol>
-                <div class="pt-4 border-t border-hair">
-                  <span class="font-mono text-[11px] text-gold font-semibold uppercase tracking-wider">Inhalte</span>
-                  <div id="aiChips" class="flex flex-wrap gap-2 mt-3"></div>
-                </div>
+              <div class="ios-solid p-6 space-y-3 h-full">
+                <span class="font-mono text-[11px] text-gold font-semibold uppercase tracking-wider">Themen</span>
+                <div id="aiChips" class="flex flex-wrap gap-2 mt-3"></div>
               </div>
             </div>
 
@@ -407,20 +407,64 @@
       <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-20">
         <div class="flex items-center justify-between mb-8">
           <button onclick="navigateTo('home')" class="ios-solid px-4 py-2 rounded-full text-xs font-mono hover:border-[#D4AF37]">← Zurück</button>
-          <span class="font-mono text-xs text-gold font-semibold">02 // PROJEKTLEITUNG</span>
+          <span class="font-mono text-xs text-gold font-semibold">03 // DIGITALISIERUNG &amp; PROJEKT</span>
         </div>
 
         <div class="max-w-3xl mb-8 space-y-2">
-          <h1 class="text-3xl sm:text-5xl font-bold tracking-tight">Technische Projektleitung.</h1>
+          <h1 class="text-3xl sm:text-5xl font-bold tracking-tight">Digitalisierung und Projektleitung.</h1>
           <p class="text-sec text-base">
-            10 Jahre internationale Automotive-Erfahrung in <strong>Rohbau (inkl. Großguss) und Gesamtfahrzeug</strong> sowie Steuerung komplexer <strong>Drohnen- & C-UAS-Projekte</strong>.
+            <strong>3D-Digitalisierung</strong> und <strong>Drohnen</strong> sowie 10 Jahre internationale <strong>Automotive-Projektleitung</strong> in Rohbau (inkl. Großguss) und Gesamtfahrzeug.
           </p>
         </div>
+
+        <div class="ios-card p-6 sm:p-8 mb-10">
+          <div class="mb-6">
+            <span class="font-mono text-xs text-gold font-semibold">3D-DIGITALISIERUNG</span>
+            <h2 class="text-xl font-bold mt-0.5">Vom Drohnenscan zum Marketing-Asset</h2>
+            <p class="text-sm text-sec mt-1">3D-Scannen großer Objekte: Punktwolke, 3D-Modell und fertiges Asset für Website und Social Media.</p>
+          </div>
+          <div class="relative rounded-3xl overflow-hidden bg-[#111113] h-[360px] sm:h-[420px] border border-white/10">
+            <canvas id="scanFlowCanvas" class="w-full h-full cursor-pointer" aria-label="Animation: Ein Drohnenscan wird zur Punktwolke, zum 3D-Objekt und zum Asset für Website und Social Media"></canvas>
+          </div>
+        </div>
+
+        <details id="pcArchive" class="archive mb-10">
+          <summary class="ios-card px-6 py-4 cursor-pointer flex items-center justify-between gap-4">
+            <span><span class="font-mono text-xs text-gold font-semibold">ARCHIV</span> <span class="text-sm font-semibold ml-2">Interaktiver 3D-Scanner (Punktwolke)</span></span>
+            <span class="archive-chevron text-mut text-xs font-mono">öffnen</span>
+          </summary>
+          <div class="mt-4">
+<div class="ios-card p-6 sm:p-8 mb-10">
+          <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+            <div>
+              <span class="font-mono text-xs text-gold font-semibold">INTERAKTIVER 3D-SCANNER</span>
+              <h2 class="text-xl font-bold mt-0.5">Drohnen-Photogrammetrie: Punktwolke & 3D-Objekt</h2>
+            </div>
+
+            <div class="flex items-center gap-1.5 p-1 ios-pill">
+              <button onclick="setPcMode('cloud')" id="pc-cloud" class="px-3.5 py-1.5 rounded-full text-xs font-medium btn-gold">Punktwolke</button>
+              <button onclick="setPcMode('mesh')" id="pc-mesh" class="px-3.5 py-1.5 rounded-full text-xs font-medium text-sec">3D-Mesh</button>
+              <button onclick="setPcMode('elev')" id="pc-elev" class="px-3.5 py-1.5 rounded-full text-xs font-medium text-sec">Höhenprofil</button>
+            </div>
+          </div>
+
+          <div class="relative rounded-3xl overflow-hidden bg-[#111113] h-[360px] sm:h-[420px] border border-white/10">
+            <canvas id="pointCloudCanvas" class="w-full h-full cursor-grab active:cursor-grabbing"></canvas>
+            <div class="absolute top-4 left-5 pointer-events-none font-mono text-[11px] text-white/70">
+              UAV-SCANNER AKTIV · <span class="text-[#D4AF37]">GSD 1.2 CM/PX</span>
+            </div>
+            <div class="absolute bottom-4 right-5 pointer-events-none font-mono text-[11px] text-white/60 bg-white/10 px-3 py-1 rounded-full backdrop-blur-md">
+              Ziehen zum Drehen
+            </div>
+          </div>
+        </div>
+          </div>
+        </details>
 
         <div class="ios-card p-6 sm:p-9 mb-10">
           <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
             <div>
-              <span class="font-mono text-xs text-gold font-semibold">PROJEKTSCHWERPUNKTE</span>
+              <span class="font-mono text-xs text-gold font-semibold">PROJEKTLEITUNG</span>
               <h2 class="text-xl sm:text-2xl font-bold mt-0.5">Rohbau, Gesamtfahrzeug & Drohnen-Systeme (UAV / C-UAS)</h2>
             </div>
 
@@ -496,60 +540,40 @@
       </div>
     </section>
 
-    <!-- VIEW 3: DIGITALISIERUNG -->
-    <section id="view-digitalisierung" class="view-section">
+    <!-- VIEW 3: DIGITALE MEDIEN -->
+    <section id="view-medien" class="view-section">
       <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-20">
         <div class="flex items-center justify-between mb-8">
           <button onclick="navigateTo('home')" class="ios-solid px-4 py-2 rounded-full text-xs font-mono hover:border-[#D4AF37]">← Zurück</button>
-          <span class="font-mono text-xs text-gold font-semibold">03 // DIGITALISIERUNG</span>
+          <span class="font-mono text-xs text-gold font-semibold">02 // DIGITALE MEDIEN</span>
         </div>
 
         <div class="max-w-2xl mb-10 space-y-2">
-          <h1 class="text-3xl sm:text-5xl font-bold tracking-tight">3D-Photogrammetrie & Film.</h1>
-          <p class="text-sec text-base">Drohnengestützte 3D-Punktwolken und 3D-Modelle sowie Videomarketing von der Kamera bis zur fertigen Website.</p>
+          <h1 class="text-3xl sm:text-5xl font-bold tracking-tight">Digitale Medien.</h1>
+          <p class="text-sec text-base">UGC-Content, Foto- und Medienproduktion für Social Media oder deinen Webauftritt.</p>
         </div>
 
-        <div class="ios-card p-6 sm:p-8 mb-10">
-          <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
-            <div>
-              <span class="font-mono text-xs text-gold font-semibold">INTERAKTIVER 3D-SCANNER</span>
-              <h2 class="text-xl font-bold mt-0.5">Drohnen-Photogrammetrie: Punktwolke & 3D-Objekt</h2>
-            </div>
-
-            <div class="flex items-center gap-1.5 p-1 ios-pill">
-              <button onclick="setPcMode('cloud')" id="pc-cloud" class="px-3.5 py-1.5 rounded-full text-xs font-medium btn-gold">Punktwolke</button>
-              <button onclick="setPcMode('mesh')" id="pc-mesh" class="px-3.5 py-1.5 rounded-full text-xs font-medium text-sec">3D-Mesh</button>
-              <button onclick="setPcMode('elev')" id="pc-elev" class="px-3.5 py-1.5 rounded-full text-xs font-medium text-sec">Höhenprofil</button>
-            </div>
+        <div class="grid md:grid-cols-3 gap-6 mb-10">
+          <div class="ios-card p-6 space-y-2">
+            <span class="font-mono text-xs text-gold font-semibold">01 // UGC-CONTENT</span>
+            <h3 class="text-lg font-bold">Content im Creator-Stil</h3>
+            <p class="text-sm text-sec">Authentische Kurzvideos und Posts für Social Media, produziert für dein Produkt oder deine Marke.</p>
           </div>
-
-          <div class="relative rounded-3xl overflow-hidden bg-[#111113] h-[360px] sm:h-[420px] border border-white/10">
-            <canvas id="pointCloudCanvas" class="w-full h-full cursor-grab active:cursor-grabbing"></canvas>
-            <div class="absolute top-4 left-5 pointer-events-none font-mono text-[11px] text-white/70">
-              UAV-SCANNER AKTIV · <span class="text-[#D4AF37]">GSD 1.2 CM/PX</span>
-            </div>
-            <div class="absolute bottom-4 right-5 pointer-events-none font-mono text-[11px] text-white/60 bg-white/10 px-3 py-1 rounded-full backdrop-blur-md">
-              Ziehen zum Drehen
-            </div>
+          <div class="ios-card p-6 space-y-2">
+            <span class="font-mono text-xs text-gold font-semibold">02 // FOTO &amp; VIDEO</span>
+            <h3 class="text-lg font-bold">Medienproduktion</h3>
+            <p class="text-sm text-sec">Hochwertige Foto- und Filmaufnahmen am Boden und aus der Luft, Schnitt und Grading. Professioneller Look mit Einsatz visionärer KI möglich.</p>
+          </div>
+          <div class="ios-card p-6 space-y-2">
+            <span class="font-mono text-xs text-gold font-semibold">03 // WEBAUFTRITT</span>
+            <h3 class="text-lg font-bold">Website-Design</h3>
+            <p class="text-sm text-sec">Schnelle, ästhetische Webseiten, die Film, Foto und 3D-Inhalte nahtlos präsentieren.</p>
           </div>
         </div>
 
-        <div class="grid md:grid-cols-3 gap-6">
-          <div class="ios-card p-6 space-y-2">
-            <span class="font-mono text-xs text-gold font-semibold">01 // 3D-SCANNEN</span>
-            <h3 class="text-lg font-bold">Große Objekte digitalisieren</h3>
-            <p class="text-sm text-sec">3D-Scannen großer Objekte: Punktwolken und 3D-Modelle, auch aus der Luft per Drohne.</p>
-          </div>
-          <div class="ios-card p-6 space-y-2">
-            <span class="font-mono text-xs text-gold font-semibold">02 // VIDEO & WERBUNG</span>
-            <h3 class="text-lg font-bold">Videografie & Social-Media-Content</h3>
-            <p class="text-sm text-sec">Hochwertige Filmaufnahmen am Boden und aus der Luft, Schnitt und Grading sowie Werbe-Content für Social Media. Professioneller Look mit Einsatz visionärer KI möglich.</p>
-          </div>
-          <div class="ios-card p-6 space-y-2">
-            <span class="font-mono text-xs text-gold font-semibold">03 // WEBSITE-DESIGN</span>
-            <h3 class="text-lg font-bold">Moderne Websites</h3>
-            <p class="text-sm text-sec">Schnelle, ästhetische Webseiten, die Film und 3D-Inhalte nahtlos präsentieren.</p>
-          </div>
+        <div class="ios-card p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <p class="text-sm text-sec">Du hast ein Projekt oder eine Idee? Schreib mir kurz, was du brauchst.</p>
+          <button onclick="openDirectProjectInquiry()" class="btn-gold px-5 py-2.5 text-xs font-mono shrink-0">Direkte Projektanfrage →</button>
         </div>
       </div>
     </section>
@@ -570,7 +594,7 @@
               <div class="flex flex-col sm:flex-row gap-5 items-center sm:items-start">
               <img src="img/profil-beispiel.svg" alt="Beispielfoto Marcel Hübner" width="160" height="160" class="w-32 h-32 sm:w-40 sm:h-40 rounded-3xl object-cover shrink-0 border border-white/10" />
               <p class="text-sm sm:text-base text-sec leading-relaxed">
-                Hinter der <strong>digitalwerkstatt</strong> stehen ein Ingenieurstudium mit zwei Master-Abschlüssen, zehn Jahre Erfahrung in der internationalen Automobilindustrie sowie Erfahrung mit Drohnen- und C-UAS-Projekten. EU-Drohnenführerschein. Zertifizierte Weiterbildung zum AI-Manager (IU Akademie).
+                Hinter <strong>digitalwerkstatt Hübner</strong> stehen ein Ingenieurstudium mit zwei Master-Abschlüssen, zehn Jahre Erfahrung in der internationalen Automobilindustrie sowie Erfahrung mit Drohnen- und C-UAS-Projekten. EU-Drohnenführerschein. Zertifizierte Weiterbildung zum AI-Manager (IU Akademie).
               </p>
               </div>
               <div class="grid sm:grid-cols-2 gap-3 pt-2">
@@ -612,8 +636,8 @@
               <select id="contactTopicSelect" name="thema" class="w-full px-4 py-3 ios-solid text-sm focus:outline-none focus:border-[#D4AF37]">
                 <option value="projektanfrage">Direkte Projektanfrage (Allgemein)</option>
                 <option value="beratung">01. Beratung (Kurzer Gratis-Call / Video-Call / Vor Ort)</option>
-                <option value="projektleitung">02. Projektleitung (Automotive / Rohbau / C-UAS)</option>
-                <option value="digitalisierung">03. Digitalisierung (3D / Video / Web)</option>
+                <option value="digitale-medien">02. Digitale Medien (UGC / Foto / Video / Web)</option>
+                <option value="digitalisierung-projektleitung">03. Digitalisierung &amp; Projektleitung (3D / Drohnen / Automotive)</option>
                 <option value="einfy">Lokale KI-Server & Cloud (mit einfy.de)</option>
               </select>
 
@@ -660,7 +684,7 @@
           <h1 class="text-3xl font-bold tracking-tight">Impressum</h1>
           <div class="space-y-1">
             <h2 class="font-mono text-xs text-gold font-semibold uppercase">Angaben gemäß § 5 Digitale-Dienste-Gesetz (DDG)</h2>
-            <p class="font-semibold text-base">digitalwerkstatt</p>
+            <p class="font-semibold text-base">digitalwerkstatt Hübner</p>
             <p class="text-sec">Inhaber: Marcel Hübner (Einzelunternehmen)</p>
             <p class="text-sec">[Straße und Hausnummer eintragen]</p>
             <p class="text-sec">[PLZ und Ort eintragen, Deutschland]</p>
@@ -709,7 +733,7 @@
 
           <div class="space-y-2">
             <h2 class="font-mono text-xs text-gold font-semibold uppercase">1. Verantwortlicher</h2>
-            <p class="text-sec">Verantwortlicher im Sinne der DSGVO ist: <strong>digitalwerkstatt – Marcel Hübner</strong> (Kontaktdaten siehe <button onclick="navigateTo('impressum')" class="text-gold underline">Impressum</button>).</p>
+            <p class="text-sec">Verantwortlicher im Sinne der DSGVO ist: <strong>digitalwerkstatt Hübner – Marcel Hübner</strong> (Kontaktdaten siehe <button onclick="navigateTo('impressum')" class="text-gold underline">Impressum</button>).</p>
           </div>
 
           <div class="space-y-2">
@@ -740,7 +764,7 @@
   <footer class="mt-auto py-8 px-4 sm:px-6 lg:px-8 border-t border-hair relative z-10 bg-white/40 dark:bg-black/20 backdrop-blur-md">
     <div class="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-xs font-mono text-mut">
       <div class="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 text-center sm:text-left">
-        <span><strong class="text-current">digitalwerkstatt</strong> — Beratung · Projektleitung · Digitalisierung</span>
+        <span><strong class="text-current">digitalwerkstatt Hübner</strong> — KI-Beratung · Digitale Medien · Digitalisierung &amp; Projektleitung</span>
         <span class="px-2.5 py-0.5 rounded-full ios-pill text-[10px] text-gold">Kein Cookie-Tracking</span>
       </div>
       <div class="flex flex-wrap items-center justify-center gap-5">

@@ -351,21 +351,81 @@ function renderAmbientBg() {
   requestAnimationFrame(renderAmbientBg);
 }
 
+// 3b. Intro: neuronales Netz im Vordergrund zieht sich nach außen zurück (~0,5 s) und gibt die Seite frei
+function runIntro() {
+  const cv = document.getElementById('introNet');
+  if (!cv) return;
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) { cv.remove(); return; }
+  const g = cv.getContext('2d');
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const W = window.innerWidth, H = window.innerHeight;
+  cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  // Schichten-Netz um die Bildschirmmitte
+  const layers = [4, 6, 7, 6, 4];
+  const spanX = Math.min(W * 0.8, 760), spanY = Math.min(H * 0.6, 420);
+  const nodes = [];
+  layers.forEach((n, li) => {
+    for (let i = 0; i < n; i++) {
+      nodes.push({
+        l: li,
+        x: (li / (layers.length - 1) - 0.5) * spanX,
+        y: ((i + 0.5) / n - 0.5) * spanY + Math.sin(li * 2.1 + i) * 8
+      });
+    }
+  });
+  const edges = [];
+  nodes.forEach(a => nodes.forEach(b => { if (b.l === a.l + 1) edges.push([a, b]); }));
+  const dark = document.documentElement.classList.contains('dark');
+  const node = dark ? '245,245,247' : '17,17,19';
+
+  const HOLD = 60, GO = 520;
+  const t0 = performance.now();
+  function frame(now) {
+    const t = now - t0;
+    const k = Math.max(0, Math.min(1, (t - HOLD) / GO));
+    const e = k * k * k;                 // Start langsam, dann nach außen beschleunigt
+    const scale = 1 + e * 5;
+    const a = 1 - k;
+    g.clearRect(0, 0, W, H);
+    cv.style.background = 'rgba(' + (dark ? '28,28,30' : '243,243,246') + ',' + Math.max(0, 1 - k * 1.4) + ')';
+    g.save();
+    g.translate(W / 2, H / 2);
+    g.scale(scale, scale);
+    g.lineWidth = 1 / scale + 0.4;
+    edges.forEach(([p, q]) => {
+      g.strokeStyle = 'rgba(212,175,55,' + (0.55 * a) + ')';
+      g.beginPath(); g.moveTo(p.x, p.y); g.lineTo(q.x, q.y); g.stroke();
+    });
+    nodes.forEach(n => {
+      g.fillStyle = 'rgba(' + node + ',' + a + ')';
+      g.beginPath(); g.arc(n.x, n.y, 4 / Math.sqrt(scale) + 1, 0, Math.PI * 2); g.fill();
+      g.strokeStyle = 'rgba(212,175,55,' + a + ')';
+      g.lineWidth = 1.2 / scale + 0.3;
+      g.stroke();
+    });
+    g.restore();
+    if (k < 1) requestAnimationFrame(frame); else cv.remove();
+  }
+  requestAnimationFrame(frame);
+}
+
 // 4. SPA Router & Direct Project Inquiry Helper
 // Routing: jede Ansicht hat eine URL (#beratung etc.), Zurück-Button bleibt auf der Seite
 const ROUTES = {
   home: '',
   consulting: 'beratung',
-  projektleitung: 'projektleitung',
-  digitalisierung: 'digitalisierung',
+  medien: 'digitale-medien',
+  projektleitung: 'digitalisierung-projektleitung',
   founder: 'ueber-mich',
   impressum: 'impressum',
   datenschutz: 'datenschutz'
 };
 const VIEW_TITLES = {
   consulting: 'KI-Beratung',
-  projektleitung: 'Projektleitung',
-  digitalisierung: 'Digitalisierung',
+  medien: 'Digitale Medien',
+  projektleitung: 'Digitalisierung & Projektleitung',
   founder: 'Über mich & Kontakt',
   impressum: 'Impressum',
   datenschutz: 'Datenschutz'
@@ -375,7 +435,8 @@ const BASE_TITLE = document.title;
 function viewFromHash() {
   const slug = decodeURIComponent(location.hash.replace(/^#\/?/, '')).toLowerCase();
   if (!slug) return 'home';
-  const hit = Object.keys(ROUTES).find(k => ROUTES[k] === slug || k === slug);
+  const ALIASES = { digitalisierung: 'projektleitung', projektleitung: 'projektleitung' };
+  const hit = Object.keys(ROUTES).find(k => ROUTES[k] === slug || k === slug) || ALIASES[slug];
   return hit || 'home';
 }
 
@@ -391,7 +452,7 @@ window.addEventListener('popstate', () => showView(viewFromHash()));
 if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
 
 function showView(viewId) {
-  document.title = VIEW_TITLES[viewId] ? VIEW_TITLES[viewId] + ' | digitalwerkstatt' : BASE_TITLE;
+  document.title = VIEW_TITLES[viewId] ? VIEW_TITLES[viewId] + ' | digitalwerkstatt Hübner' : BASE_TITLE;
   const loader = document.getElementById('topLoader');
   if (loader) loader.style.opacity = '1';
   deactivateCardBgEffect();
@@ -410,7 +471,7 @@ function showView(viewId) {
     });
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    if (viewId === 'digitalisierung') resizeCanvas();
+    if (viewId === 'projektleitung') { resizeCanvas(); ScanFlow.resize(); }
     requestCardFocusUpdate();
     setTimeout(() => {
       if (loader) loader.style.opacity = '0';
@@ -699,6 +760,371 @@ function renderScanner() {
   requestAnimationFrame(renderScanner);
 }
 
+// 7b. Animation: Drohnenscan -> Punktwolke -> Mesh -> 3D-Objekt -> Marketing-Asset
+const ScanFlow = (() => {
+  const el = document.getElementById('scanFlowCanvas');
+  if (!el) return { resize() {}, start() {} };
+  const c = el.getContext('2d');
+  const LOOP = 20;
+  const STAGES = [
+    { t: 0, label: '01 // DROHNENSCAN' },
+    { t: 5, label: '02 // PUNKTWOLKE' },
+    { t: 7, label: '03 // 3D-MESH' },
+    { t: 10, label: '04 // 3D-OBJEKT' },
+    { t: 12, label: '05 // ASSET FÜR WEB & MARKETING' }
+  ];
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v));
+  const ease = v => { v = clamp(v); return v * v * (3 - 2 * v); };
+
+  // Objekt: Werkhalle mit Anbau und zwei Silos (y negativ = oben, Boden bei y = 40)
+  const WALL = [154, 160, 170], ROOF = [212, 175, 55], ANNEX = [111, 119, 130], SILO = [195, 199, 206];
+  const faces = [];
+  const addFace = (v, col) => faces.push({ v, col });
+  const box = (x0, x1, y0, y1, z0, z1, col, top = true) => {
+    addFace([[x0, y0, z0], [x1, y0, z0], [x1, y1, z0], [x0, y1, z0]], col);
+    addFace([[x0, y0, z1], [x1, y0, z1], [x1, y1, z1], [x0, y1, z1]], col);
+    addFace([[x0, y0, z0], [x0, y0, z1], [x0, y1, z1], [x0, y1, z0]], col);
+    addFace([[x1, y0, z0], [x1, y0, z1], [x1, y1, z1], [x1, y1, z0]], col);
+    if (top) addFace([[x0, y0, z0], [x1, y0, z0], [x1, y0, z1], [x0, y0, z1]], col);
+  };
+  box(-95, 95, -20, 40, -48, 48, WALL, false);
+  addFace([[-95, -20, -52], [95, -20, -52], [95, -45, 0], [-95, -45, 0]], ROOF);
+  addFace([[-95, -20, 52], [95, -20, 52], [95, -45, 0], [-95, -45, 0]], ROOF);
+  addFace([[-95, -20, -48], [-95, -20, 48], [-95, -45, 0]], WALL);
+  addFace([[95, -20, -48], [95, -20, 48], [95, -45, 0]], WALL);
+  box(95, 135, -8, 40, -25, 25, ANNEX);
+  const silo = (cx, cz, r, yTop) => {
+    const n = 12, ring = [];
+    for (let i = 0; i < n; i++) {
+      const a = (i / n) * Math.PI * 2;
+      ring.push([cx + Math.cos(a) * r, cz + Math.sin(a) * r]);
+    }
+    for (let i = 0; i < n; i++) {
+      const p = ring[i], q = ring[(i + 1) % n];
+      addFace([[p[0], yTop, p[1]], [q[0], yTop, q[1]], [q[0], 40, q[1]], [p[0], 40, p[1]]], SILO);
+    }
+    addFace(ring.map(p => [p[0], yTop, p[1]]), SILO);
+  };
+  silo(-70, -80, 20, -55);
+  silo(-25, -85, 14, -35);
+
+  // Punktwolke: Flächen-gewichtet abgetastet, plus lockeres Gelände
+  const tris = [];
+  let totalArea = 0;
+  faces.forEach((f, fi) => {
+    for (let i = 1; i < f.v.length - 1; i++) {
+      const a = f.v[0], b = f.v[i], d = f.v[i + 1];
+      const u = [b[0] - a[0], b[1] - a[1], b[2] - a[2]], w = [d[0] - a[0], d[1] - a[1], d[2] - a[2]];
+      const cx = u[1] * w[2] - u[2] * w[1], cy = u[2] * w[0] - u[0] * w[2], cz = u[0] * w[1] - u[1] * w[0];
+      const area = Math.hypot(cx, cy, cz) / 2;
+      totalArea += area;
+      tris.push({ a, b, d, area, fi });
+    }
+  });
+  let seed = 7;
+  const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+  const cloud = [];
+  const addPoint = (x, y, z, col, ground) => {
+    cloud.push({
+      x, y, z, col, ground,
+      key: (Math.atan2(z, x) + Math.PI) / (Math.PI * 2),
+      jx: rnd() * 2 - 1, jy: rnd() * 2 - 1, jz: rnd() * 2 - 1
+    });
+  };
+  for (let i = 0; i < 2300; i++) {
+    let r = rnd() * totalArea, tr = tris[0];
+    for (const t of tris) { if ((r -= t.area) <= 0) { tr = t; break; } }
+    let u = rnd(), v = rnd();
+    if (u + v > 1) { u = 1 - u; v = 1 - v; }
+    const x = tr.a[0] + u * (tr.b[0] - tr.a[0]) + v * (tr.d[0] - tr.a[0]);
+    const y = tr.a[1] + u * (tr.b[1] - tr.a[1]) + v * (tr.d[1] - tr.a[1]);
+    const z = tr.a[2] + u * (tr.b[2] - tr.a[2]) + v * (tr.d[2] - tr.a[2]);
+    addPoint(x, y, z, faces[tr.fi].col, false);
+  }
+  for (let i = 0; i < 420; i++) {
+    const x = (rnd() * 2 - 1) * 170, z = (rnd() * 2 - 1) * 150;
+    if (Math.abs(x) < 100 && Math.abs(z) < 55) continue;
+    addPoint(x, 40 + Math.sin(x * 0.04) * Math.cos(z * 0.05) * 3, z, [120, 124, 132], true);
+  }
+
+  let w = 0, h = 0, dpr = 1, t0 = performance.now(), raf = 0, visible = false;
+
+  function resize() {
+    const r = el.parentElement.getBoundingClientRect();
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    w = Math.max(r.width, 10); h = Math.max(r.height, 10);
+    el.width = Math.round(w * dpr); el.height = Math.round(h * dpr);
+    c.setTransform(dpr, 0, 0, dpr, 0, 0);
+    if (!raf) draw(performance.now());
+  }
+
+  function rr(x, y, rw, rh, r) {
+    c.beginPath();
+    c.moveTo(x + r, y);
+    c.arcTo(x + rw, y, x + rw, y + rh, r);
+    c.arcTo(x + rw, y + rh, x, y + rh, r);
+    c.arcTo(x, y + rh, x, y, r);
+    c.arcTo(x, y, x + rw, y, r);
+    c.closePath();
+  }
+
+  // Projektion in ein Rechteck rect = {x, y, w, h}
+  function makeProj(rect, yaw, pitch) {
+    const cy = Math.cos(yaw), sy = Math.sin(yaw), cx = Math.cos(pitch), sx = Math.sin(pitch);
+    const k = Math.min(rect.w / 225, rect.h / 140);
+    const ox = rect.x + rect.w / 2, oy = rect.y + rect.h / 2;
+    return (x, y, z) => {
+      const x1 = x * cy - z * sy, z1 = z * cy + x * sy;
+      const y2 = y * cx - z1 * sx, z2 = z1 * cx + y * sx;
+      const s = 520 / (520 + z2 + 420) * k;
+      return { px: ox + x1 * s, py: oy + y2 * s, z: z2, s };
+    };
+  }
+
+  // o: { pts, wire, solid, grid, scan (0..1), jitter }
+  function drawObject(rect, yaw, t, o) {
+    const P = makeProj(rect, yaw, 0.42);
+    const cy = Math.cos(yaw), sy = Math.sin(yaw), cx = Math.cos(0.42), sx = Math.sin(0.42);
+
+    if (o.grid > 0.01) {
+      c.strokeStyle = 'rgba(212,175,55,' + (0.16 * o.grid) + ')';
+      c.lineWidth = 1;
+      c.beginPath();
+      for (let g = -160; g <= 160; g += 40) {
+        let a = P(g, 40, -160), b = P(g, 40, 160);
+        c.moveTo(a.px, a.py); c.lineTo(b.px, b.py);
+        a = P(-160, 40, g); b = P(160, 40, g);
+        c.moveTo(a.px, a.py); c.lineTo(b.px, b.py);
+      }
+      c.stroke();
+    }
+
+    if (o.solid > 0.01 || o.wire > 0.01) {
+      const list = faces.map(f => {
+        const pv = f.v.map(q => P(q[0], q[1], q[2]));
+        const z = pv.reduce((s, q) => s + q.z, 0) / pv.length;
+        const a = f.v[0], b = f.v[1], d = f.v[2];
+        const u = [b[0] - a[0], b[1] - a[1], b[2] - a[2]], v = [d[0] - a[0], d[1] - a[1], d[2] - a[2]];
+        let nx = u[1] * v[2] - u[2] * v[1], ny = u[2] * v[0] - u[0] * v[2], nz = u[0] * v[1] - u[1] * v[0];
+        const nl = Math.hypot(nx, ny, nz) || 1; nx /= nl; ny /= nl; nz /= nl;
+        const x1 = nx * cy - nz * sy, z1 = nz * cy + nx * sy;
+        const y2 = ny * cx - z1 * sx, z2 = z1 * cx + ny * sx;
+        const lit = Math.abs(x1 * -0.4 + y2 * -0.75 + z2 * -0.5);
+        return { f, pv, z, shade: 0.42 + 0.58 * clamp(lit) };
+      }).sort((m, n) => n.z - m.z);
+
+      c.lineJoin = 'round';
+      list.forEach(it => {
+        c.beginPath();
+        it.pv.forEach((q, i) => (i ? c.lineTo(q.px, q.py) : c.moveTo(q.px, q.py)));
+        c.closePath();
+        if (o.solid > 0.01) {
+          const col = it.f.col, s = it.shade;
+          c.fillStyle = 'rgba(' + Math.round(col[0] * s) + ',' + Math.round(col[1] * s) + ',' + Math.round(col[2] * s) + ',' + o.solid + ')';
+          c.fill();
+        } else if (o.wire > 0.01) {
+          c.fillStyle = 'rgba(17,17,19,' + (0.7 * o.wire) + ')';
+          c.fill();
+        }
+        if (o.wire > 0.01) {
+          c.strokeStyle = 'rgba(212,175,55,' + (0.85 * o.wire) + ')';
+          c.lineWidth = 0.9;
+          c.stroke();
+          if (it.pv.length === 4) {
+            c.beginPath();
+            c.moveTo(it.pv[0].px, it.pv[0].py); c.lineTo(it.pv[2].px, it.pv[2].py);
+            c.strokeStyle = 'rgba(212,175,55,' + (0.35 * o.wire) + ')';
+            c.stroke();
+          }
+        }
+      });
+    }
+
+    if (o.pts > 0.01) {
+      const bright = [];
+      cloud.forEach(p => {
+        if (p.ground && o.pts2 !== undefined) { /* Gelände folgt pts2 */ }
+        const vis = p.key <= o.scan;
+        if (!vis) return;
+        const alpha = (p.ground ? o.pts2 : o.pts);
+        if (alpha < 0.02) return;
+        const j = o.jitter * 4;
+        const q = P(p.x + p.jx * j, p.y + p.jy * j, p.z + p.jz * j);
+        const fresh = o.scan < 1 && o.scan - p.key < 0.05;
+        const hn = clamp((40 - p.y) / 85);
+        const r = Math.max(1.1, q.s * (fresh ? 2.6 : 1.7));
+        c.globalAlpha = alpha * (0.45 + 0.55 * clamp(1 - (q.z + 150) / 400));
+        if (fresh) { bright.push([q.px, q.py, r]); return; }
+        c.fillStyle = p.ground ? 'rgb(120,124,132)' : (hn > 0.62 ? 'rgb(212,175,55)' : 'rgb(235,235,240)');
+        c.fillRect(q.px - r / 2, q.py - r / 2, r, r);
+      });
+      c.globalAlpha = 1;
+      c.fillStyle = '#F2D46A';
+      bright.forEach(b => c.fillRect(b[0] - b[2] / 2, b[1] - b[2] / 2, b[2], b[2]));
+    }
+    return P;
+  }
+
+  function drawDrone(P, t, sp) {
+    const a = -Math.PI + sp * Math.PI * 2;
+    const lift = Math.max(0, t - 5) * 70;
+    const alpha = 1 - clamp((t - 5) / 1.2);
+    if (alpha <= 0) return;
+    const d = P(Math.cos(a) * 150, -100 - lift, Math.sin(a) * 150);
+    const tg = P(Math.cos(a) * 70, 20, Math.sin(a) * 70);
+    c.globalAlpha = alpha;
+    const g = c.createLinearGradient(d.px, d.py, tg.px, tg.py);
+    g.addColorStop(0, 'rgba(212,175,55,0.7)');
+    g.addColorStop(1, 'rgba(212,175,55,0.05)');
+    c.fillStyle = g;
+    c.beginPath();
+    c.moveTo(d.px, d.py); c.lineTo(tg.px - 26, tg.py); c.lineTo(tg.px + 26, tg.py);
+    c.closePath(); c.fill();
+    const k = 0.9 + d.s * 3;
+    c.strokeStyle = '#D4AF37'; c.fillStyle = '#D4AF37'; c.lineWidth = 1.5;
+    [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(m => {
+      c.beginPath(); c.moveTo(d.px, d.py); c.lineTo(d.px + m[0] * 9 * k, d.py + m[1] * 4 * k); c.stroke();
+      c.beginPath(); c.ellipse(d.px + m[0] * 9 * k, d.py + m[1] * 4 * k, 5 * k, 1.8 * k, 0, 0, Math.PI * 2); c.stroke();
+    });
+    c.beginPath(); c.arc(d.px, d.py, 3 * k, 0, Math.PI * 2); c.fill();
+    c.globalAlpha = 1;
+  }
+
+  function slots() {
+    if (w >= 640) {
+      const ph = h * 0.7;
+      return {
+        browser: { x: w * 0.02, y: h * 0.2, w: w * 0.33, h: h * 0.5 },
+        hero: { x: w * 0.37, y: h * 0.04, w: w * 0.26, h: h * 0.82 },
+        phone: { x: w * 0.98 - ph * 0.5, y: h * 0.14, w: ph * 0.5, h: ph }
+      };
+    }
+    return {
+      browser: { x: w * 0.05, y: h * 0.07, w: w * 0.9, h: h * 0.38 },
+      hero: { x: w * 0.36, y: h * 0.5, w: w * 0.6, h: h * 0.46 },
+      phone: { x: w * 0.06, y: h * 0.54, w: h * 0.4 * 0.5, h: h * 0.4 }
+    };
+  }
+
+  function drawBrowser(r, e, yaw) {
+    c.globalAlpha = e;
+    rr(r.x, r.y, r.w, r.h, 10); c.fillStyle = '#1c1c1f'; c.fill();
+    c.strokeStyle = 'rgba(255,255,255,0.16)'; c.lineWidth = 1; c.stroke();
+    const bar = Math.min(22, r.h * 0.12);
+    ['#ff5f57', '#febc2e', '#28c840'].forEach((col, i) => {
+      c.fillStyle = col; c.beginPath(); c.arc(r.x + 12 + i * 12, r.y + bar / 2, 3, 0, Math.PI * 2); c.fill();
+    });
+    c.fillStyle = 'rgba(255,255,255,0.08)';
+    rr(r.x + 52, r.y + bar / 2 - 5, r.w - 64, 10, 5); c.fill();
+    c.fillStyle = 'rgba(255,255,255,0.4)'; c.font = '9px ui-monospace, monospace'; c.textAlign = 'left';
+    c.fillText('ihre-website.de', r.x + 60, r.y + bar / 2 + 3);
+    const bx = r.x + 14, by = r.y + bar + 14;
+    c.fillStyle = '#D4AF37'; c.fillRect(bx, by, r.w * 0.2, 7);
+    c.fillStyle = 'rgba(255,255,255,0.7)'; c.fillRect(bx, by + 16, r.w * 0.32, 8);
+    c.fillStyle = 'rgba(255,255,255,0.22)';
+    for (let i = 0; i < 3; i++) c.fillRect(bx, by + 34 + i * 10, r.w * (0.3 - i * 0.04), 4);
+    rr(bx, by + 72, r.w * 0.16, 14, 7); c.fillStyle = '#D4AF37'; c.fill();
+    c.save();
+    rr(r.x, r.y + bar, r.w, r.h - bar, 10); c.clip();
+    drawObject({ x: r.x + r.w * 0.42, y: r.y + bar, w: r.w * 0.58, h: r.h - bar }, yaw, 14, { solid: e, wire: 0, pts: 0, grid: 0, scan: 1, jitter: 0 });
+    c.restore();
+    c.globalAlpha = 1;
+  }
+
+  function drawPhone(r, e, yaw) {
+    c.globalAlpha = e;
+    rr(r.x, r.y, r.w, r.h, 16); c.fillStyle = '#1c1c1f'; c.fill();
+    c.strokeStyle = 'rgba(255,255,255,0.2)'; c.lineWidth = 1.5; c.stroke();
+    c.fillStyle = 'rgba(255,255,255,0.7)'; c.beginPath(); c.arc(r.x + 12, r.y + 14, 4, 0, Math.PI * 2); c.fill();
+    c.fillStyle = 'rgba(255,255,255,0.4)'; c.font = '9px ui-monospace, monospace'; c.textAlign = 'left';
+    c.fillText('Social Ad', r.x + 22, r.y + 17);
+    c.save();
+    rr(r.x, r.y + 26, r.w, r.h - 26, 4); c.clip();
+    drawObject({ x: r.x, y: r.y + 26, w: r.w, h: (r.h - 26) * 0.7 }, yaw, 14, { solid: e, wire: 0, pts: 0, grid: 0, scan: 1, jitter: 0 });
+    c.restore();
+    rr(r.x + r.w * 0.15, r.y + r.h - 34, r.w * 0.7, 16, 8); c.fillStyle = '#D4AF37'; c.fill();
+    c.globalAlpha = 1;
+  }
+
+  function draw(now) {
+    const t = reduce ? 14 : ((now - t0) / 1000) % LOOP;
+    c.fillStyle = '#111113';
+    c.fillRect(0, 0, w, h);
+
+    const yaw = reduce ? 0.6 : 0.5 + t * 0.32;
+    const sp = clamp(t / 5);
+    const e = ease((t - 12) / 1.6);
+    const sl = slots();
+    const full = { x: 0, y: 0, w, h };
+    const L = (a, b) => a + (b - a) * e;
+    const hero = { x: L(full.x, sl.hero.x), y: L(full.y, sl.hero.y), w: L(full.w, sl.hero.w), h: L(full.h, sl.hero.h) };
+
+    if (e > 0.01) {
+      drawBrowser(sl.browser, e, yaw + 0.5);
+      drawPhone(sl.phone, e, yaw - 0.6);
+    }
+
+    const solid = ease((t - 9.5) / 1.5);
+    const wire = ease((t - 6.5) / 1.5) * (1 - 0.65 * ease((t - 11) / 1.5));
+    const pts = 1 - ease((t - 7.5) / 2);
+    const pts2 = 1 - ease((t - 10) / 2);
+    const P = drawObject(hero, yaw, t, {
+      pts, pts2, wire, solid, grid: 1 - 0.5 * e, scan: sp, jitter: 1 - ease((t - 4.5) / 2.5)
+    });
+    if (t < 6.2) drawDrone(P, t, sp);
+
+    // Beschriftung
+    c.textAlign = 'left';
+    c.font = '600 11px ui-monospace, monospace';
+    let cur = STAGES[0];
+    STAGES.forEach(s => { if (t >= s.t) cur = s; });
+    c.fillStyle = '#D4AF37';
+    c.fillText(cur.label, 18, 24);
+    if (e > 0.5 && w >= 640) {
+      c.fillStyle = 'rgba(255,255,255,' + (0.5 * e) + ')';
+      c.font = '10px ui-monospace, monospace'; c.textAlign = 'center';
+      c.fillText('Website-Hero', sl.browser.x + sl.browser.w / 2, sl.browser.y + sl.browser.h + 16);
+      c.fillText('3D-Asset', sl.hero.x + sl.hero.w / 2, sl.hero.y + sl.hero.h + 8);
+      c.fillText('Social-Media-Ad', sl.phone.x + sl.phone.w / 2, sl.phone.y + sl.phone.h + 16);
+      c.textAlign = 'left';
+    }
+    // Fortschritt
+    const bw = (w - 36) / STAGES.length;
+    STAGES.forEach((s, i) => {
+      const t1 = i + 1 < STAGES.length ? STAGES[i + 1].t : 18;
+      c.fillStyle = 'rgba(255,255,255,0.12)';
+      c.fillRect(18 + i * bw, h - 14, bw - 4, 3);
+      c.fillStyle = '#D4AF37';
+      c.fillRect(18 + i * bw, h - 14, (bw - 4) * clamp((t - s.t) / (t1 - s.t)), 3);
+    });
+
+    // Ein-/Ausblenden an der Schleifengrenze
+    const fade = reduce ? 1 : Math.min(1, t / 0.6, (LOOP - t) / 0.8);
+    if (fade < 1) { c.fillStyle = 'rgba(17,17,19,' + (1 - fade) + ')'; c.fillRect(0, 0, w, h); }
+  }
+
+  function loop(now) {
+    draw(now);
+    raf = (visible && !reduce) ? requestAnimationFrame(loop) : 0;
+  }
+
+  function start() {
+    resize();
+    el.addEventListener('click', () => { t0 = performance.now(); });
+    if ('IntersectionObserver' in window) {
+      new IntersectionObserver(en => {
+        visible = en[0].isIntersecting;
+        if (visible && !raf) { t0 = performance.now(); raf = requestAnimationFrame(loop); }
+      }).observe(el);
+    } else {
+      visible = true; raf = requestAnimationFrame(loop);
+    }
+    window.addEventListener('resize', resize);
+  }
+  return { resize, start };
+})();
+
 // 8. Contact Form: Versand über Formspree
 async function submitForm(e) {
   e.preventDefault();
@@ -792,6 +1218,7 @@ function initCardFocus() {
 // 9. Initialize App on DOM Ready
 window.addEventListener('DOMContentLoaded', () => {
   initTheme();
+  runIntro();
   initCardFocus();
   setAmgScope('rohbau');
   setAiScope('bedarf');
@@ -799,5 +1226,8 @@ window.addEventListener('DOMContentLoaded', () => {
   showView(viewFromHash());
   resizeCanvas();
   requestAnimationFrame(renderScanner);
+  ScanFlow.start();
+  const arch = document.getElementById('pcArchive');
+  if (arch) arch.addEventListener('toggle', () => { resizeCanvas(); });
   requestAnimationFrame(renderAmbientBg);
 });
