@@ -351,7 +351,8 @@ function renderAmbientBg() {
   requestAnimationFrame(renderAmbientBg);
 }
 
-// 3b. Intro: neuronales Netz im Vordergrund zieht sich nach außen zurück (~0,5 s) und gibt die Seite frei
+// 3b. Intro: 3D-Neuronalnetz, Kamera fliegt hindurch, Iris-Übergang gibt die Seite frei (Einstellungen: INTRO_MS)
+const INTRO_MS = 2100;
 function runIntro() {
   const cv = document.getElementById('introNet');
   if (!cv) return;
@@ -361,52 +362,150 @@ function runIntro() {
   const W = window.innerWidth, H = window.innerHeight;
   cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
   g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  document.body.classList.add('intro-pre');
 
-  // Schichten-Netz um die Bildschirmmitte
-  const layers = [4, 6, 7, 6, 4];
-  const spanX = Math.min(W * 0.8, 760), spanY = Math.min(H * 0.6, 420);
-  const nodes = [];
-  layers.forEach((n, li) => {
+  const small = W < 640;
+  let seed = 11;
+  const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+
+  // Schichten entlang z; Kamera startet davor und fliegt hindurch
+  const LAYERS = 10, GAP = 150, ZLEN = (LAYERS - 1) * GAP;
+  const nodes = [], layerIdx = [];
+  for (let l = 0; l < LAYERS; l++) {
+    const n = (small ? 9 : 15) + Math.floor(rnd() * 6);
+    const R = 150 + Math.sin(l / (LAYERS - 1) * Math.PI) * 170;
+    layerIdx.push([]);
     for (let i = 0; i < n; i++) {
-      nodes.push({
-        l: li,
-        x: (li / (layers.length - 1) - 0.5) * spanX,
-        y: ((i + 0.5) / n - 0.5) * spanY + Math.sin(li * 2.1 + i) * 8
-      });
+      const a = rnd() * Math.PI * 2, r = Math.sqrt(rnd()) * R;
+      nodes.push({ x: Math.cos(a) * r * 1.25, y: Math.sin(a) * r * 0.8, z: -l * GAP + (rnd() - 0.5) * 50, l, out: [] });
+      layerIdx[l].push(nodes.length - 1);
     }
-  });
+  }
   const edges = [];
-  nodes.forEach(a => nodes.forEach(b => { if (b.l === a.l + 1) edges.push([a, b]); }));
-  const dark = document.documentElement.classList.contains('dark');
-  const node = dark ? '245,245,247' : '17,17,19';
+  layerIdx.forEach((ids, l) => {
+    if (l === LAYERS - 1) return;
+    ids.forEach(i => {
+      const near = layerIdx[l + 1].map(j => [j, Math.hypot(nodes[i].x - nodes[j].x, nodes[i].y - nodes[j].y)])
+        .sort((p, q) => p[1] - q[1]).slice(0, small ? 2 : 3);
+      near.forEach(([j]) => { edges.push({ a: i, b: j }); nodes[i].out.push(edges.length - 1); });
+    });
+  });
 
-  const HOLD = 60, GO = 520;
+  // Glow-Sprite
+  const spr = document.createElement('canvas'); spr.width = spr.height = 64;
+  const sg = spr.getContext('2d');
+  const grd = sg.createRadialGradient(32, 32, 0, 32, 32, 32);
+  grd.addColorStop(0, 'rgba(255,244,200,1)');
+  grd.addColorStop(0.25, 'rgba(240,200,80,0.75)');
+  grd.addColorStop(1, 'rgba(212,175,55,0)');
+  sg.fillStyle = grd; sg.fillRect(0, 0, 64, 64);
+
+  // Signale, die über die Kanten laufen
+  const pulses = [];
+  const fire = (ei, delay) => pulses.push({ e: ei, p: -(delay || 0), v: 0.9 + rnd() * 0.9 });
+  for (let i = 0; i < (small ? 14 : 28); i++) fire(Math.floor(rnd() * edges.length), rnd() * 0.9);
+
+  const ease = v => { v = Math.max(0, Math.min(1, v)); return v * v * (3 - 2 * v); };
+  const cl = v => Math.max(0, Math.min(1, v));
+  const F = Math.min(W, H) * 0.95;
+  const cy0 = -ZLEN / 2;
   const t0 = performance.now();
+  let last = t0, done = false;
+
+  function finish() {
+    if (done) return; done = true;
+    document.body.classList.remove('intro-pre');
+    cv.remove();
+  }
+  cv.addEventListener('click', finish);
+
   function frame(now) {
-    const t = now - t0;
-    const k = Math.max(0, Math.min(1, (t - HOLD) / GO));
-    const e = k * k * k;                 // Start langsam, dann nach außen beschleunigt
-    const scale = 1 + e * 5;
-    const a = 1 - k;
-    g.clearRect(0, 0, W, H);
-    cv.style.background = 'rgba(' + (dark ? '28,28,30' : '243,243,246') + ',' + Math.max(0, 1 - k * 1.4) + ')';
-    g.save();
-    g.translate(W / 2, H / 2);
-    g.scale(scale, scale);
-    g.lineWidth = 1 / scale + 0.4;
-    edges.forEach(([p, q]) => {
-      g.strokeStyle = 'rgba(212,175,55,' + (0.55 * a) + ')';
-      g.beginPath(); g.moveTo(p.x, p.y); g.lineTo(q.x, q.y); g.stroke();
+    if (done) return;
+    const t = now - t0, dt = Math.min(0.05, (now - last) / 1000); last = now;
+    const u = t / INTRO_MS;
+    const dolly = ease((u - 0.25) / 0.65);                    // ab ~25 %: Kamera fliegt hindurch
+    const camZ = 520 - (520 + ZLEN + 160) * (dolly * dolly * 0.55 + dolly * 0.45);
+    const yaw = (1 - ease(u / 0.55)) * 0.7 - 0.12;             // Einschwenken aus seitlichem Blick
+    const cyaw = Math.cos(yaw), syaw = Math.sin(yaw);
+    const boot = ease(u / 0.3);                                 // Schichten blenden von der Mitte aus auf
+
+    g.globalCompositeOperation = 'source-over';
+    const bg = g.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, Math.max(W, H) * 0.75);
+    bg.addColorStop(0, '#15120a'); bg.addColorStop(1, '#050506');
+    g.fillStyle = bg; g.fillRect(0, 0, W, H);
+
+    // Projektion
+    const P = nodes.map(n => {
+      const dx = n.x, dz = n.z - cy0;
+      const x1 = dx * cyaw - dz * syaw, z1 = dz * cyaw + dx * syaw + cy0;
+      const d = camZ - z1;
+      const s = F / Math.max(d, 1);
+      return { px: W / 2 + x1 * s, py: H / 2 + n.y * s, d, s, vis: d > 40 };
     });
-    nodes.forEach(n => {
-      g.fillStyle = 'rgba(' + node + ',' + a + ')';
-      g.beginPath(); g.arc(n.x, n.y, 4 / Math.sqrt(scale) + 1, 0, Math.PI * 2); g.fill();
-      g.strokeStyle = 'rgba(212,175,55,' + a + ')';
-      g.lineWidth = 1.2 / scale + 0.3;
-      g.stroke();
+    const fog = d => cl(1 - (d - 200) / 1500);
+
+    g.globalCompositeOperation = 'lighter';
+    g.lineCap = 'round';
+    edges.forEach((e, i) => {
+      const A = P[e.a], B = P[e.b];
+      if (!A.vis || !B.vis) return;
+      const lb = cl(boot * 1.6 - Math.abs(nodes[e.a].l - 4.5) / 6);
+      const al = 0.38 * Math.min(fog(A.d), fog(B.d)) * lb;
+      if (al < 0.01) return;
+      g.strokeStyle = 'rgba(212,175,55,' + al + ')';
+      g.lineWidth = Math.max(0.5, 1.1 * (A.s + B.s) * 0.5 * 1.5);
+      g.beginPath(); g.moveTo(A.px, A.py); g.lineTo(B.px, B.py); g.stroke();
     });
-    g.restore();
-    if (k < 1) requestAnimationFrame(frame); else cv.remove();
+
+    nodes.forEach((n, i) => {
+      const q = P[i];
+      if (!q.vis) return;
+      const lb = cl(boot * 1.6 - Math.abs(n.l - 4.5) / 6);
+      const al = fog(q.d) * lb;
+      if (al < 0.02) return;
+      const sz = Math.min(120, 16 * q.s * 2.2 + 3);
+      g.globalAlpha = Math.min(1, al * 1.3);
+      g.drawImage(spr, q.px - sz / 2, q.py - sz / 2, sz, sz);
+    });
+
+    // Signale
+    for (let i = pulses.length - 1; i >= 0; i--) {
+      const pl = pulses[i];
+      pl.p += dt * pl.v * 1.6;
+      if (pl.p < 0) continue;
+      if (pl.p >= 1) {
+        const nx = nodes[edges[pl.e].b].out;
+        pulses.splice(i, 1);
+        if (nx.length && pulses.length < (small ? 40 : 90)) nx.forEach(k => { if (rnd() < 0.7) fire(k, 0); });
+        else if (pulses.length < (small ? 14 : 28)) fire(Math.floor(rnd() * edges.length), 0);
+        continue;
+      }
+      const A = P[edges[pl.e].a], B = P[edges[pl.e].b];
+      if (!A.vis || !B.vis) continue;
+      const x = A.px + (B.px - A.px) * pl.p, y = A.py + (B.py - A.py) * pl.p;
+      const d = A.d + (B.d - A.d) * pl.p;
+      const sz = Math.min(90, 40 * (F / Math.max(d, 1)) * 0.5 + 6);
+      g.globalAlpha = Math.min(1, fog(d) * 1.4);
+      g.drawImage(spr, x - sz / 2, y - sz / 2, sz, sz);
+    }
+    g.globalAlpha = 1;
+
+    // heller Blitz kurz vor dem Durchbruch
+    const flash = cl(1 - Math.abs(u - 0.78) / 0.14) * 0.5;
+    if (flash > 0) {
+      g.globalCompositeOperation = 'lighter';
+      const fg = g.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, Math.max(W, H) * 0.6);
+      fg.addColorStop(0, 'rgba(255,236,170,' + flash + ')'); fg.addColorStop(1, 'rgba(255,236,170,0)');
+      g.fillStyle = fg; g.fillRect(0, 0, W, H);
+    }
+
+    // Iris: ein Loch wächst aus der Mitte, dahinter erscheint die Seite
+    const irisK = ease((u - 0.62) / 0.38);
+    const diag = Math.hypot(W, H) / 2;
+    cv.style.setProperty('--r', (-100 + irisK * (diag + 220)) + 'px');
+    if (u > 0.5 && document.body.classList.contains('intro-pre')) document.body.classList.remove('intro-pre');
+
+    if (u < 1) requestAnimationFrame(frame); else finish();
   }
   requestAnimationFrame(frame);
 }
@@ -471,7 +570,7 @@ function showView(viewId) {
     });
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    if (viewId === 'projektleitung') { resizeCanvas(); ScanFlow.resize(); }
+    if (viewId === 'projektleitung') ScanFlow.resize();
     requestCardFocusUpdate();
     setTimeout(() => {
       if (loader) loader.style.opacity = '0';
@@ -497,52 +596,6 @@ function toggleMobileMenu() {
 // 5. Subpage 01: Beratung
 const SCOPE_ON = 'scope-btn scope-on';
 const SCOPE_OFF = 'scope-btn';
-
-const aiData = {
-  bedarf: {
-    tag: 'SCHWERPUNKT // BEDARFSANALYSE',
-    heading: 'Bedarfsanalyse',
-    copy: 'Individuelle Bedarfsanalyse für Ihren Anwendungsfall. Professionell und individuell gestaltetes Coaching auf Ihren Anwendungsfall, inkl. Prompts und Tools. Grundlagen, effiziente Foto- und Videoerstellung und mehr.',
-    chips: ['Individuelles Coaching', 'Prompts & Vorlagen', 'Tools & Workflows', 'KI-Grundlagen', 'Foto- & Videoerstellung'],
-    l1: 'FORMAT', s1: 'Individuell, 1:1',
-    l2: 'ORT', s2: 'Video-Call oder vor Ort'
-  },
-  aiact: {
-    tag: 'SCHWERPUNKT // EU AI ACT & DATENSCHUTZ',
-    heading: 'EU AI Act & Datenschutz',
-    copy: 'Der EU AI Act (Verordnung (EU) 2024/1689) ist der erste umfassende Rechtsrahmen für KI und gilt gestaffelt. Verbote bestimmter KI-Praktiken und die Pflicht zur KI-Kompetenz (Art. 4) gelten bereits seit Februar 2025; weitere Pflichten folgen schrittweise. Wir klären, welche Rolle Ihr Unternehmen hat, welche Fristen für Sie gelten und wie KI-Einsatz und DSGVO praktisch zusammenpassen.',
-    chips: ['KI-Kompetenz (Art. 4)', 'Rollen & Pflichten', 'Fristen & Stufen', 'KI und DSGVO', 'Praxisumsetzung'],
-    l1: 'ZIEL', s1: 'Orientierung & Umsetzung',
-    l2: 'HINWEIS', s2: 'Keine Rechtsberatung'
-  }
-};
-
-function setAiScope(key) {
-  Object.keys(aiData).forEach(k => {
-    const btn = document.getElementById('ai-btn-' + k);
-    if (btn) btn.className = (k === key) ? SCOPE_ON : SCOPE_OFF;
-  });
-  const d = aiData[key];
-  if (!d) return;
-  const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
-  set('aiTag', d.tag);
-  set('aiHeading', d.heading);
-  set('aiCopy', d.copy);
-  set('aiStat1Label', d.l1);
-  set('aiStat1', d.s1);
-  set('aiStat2Label', d.l2);
-  set('aiStat2', d.s2);
-  const chips = document.getElementById('aiChips');
-  if (chips) {
-    chips.textContent = '';
-    d.chips.forEach(c => {
-      const span = document.createElement('span');
-      span.className = 'px-3.5 py-1.5 ios-pill font-mono text-xs font-semibold border border-[#D4AF37]/40';
-      span.textContent = c;
-      chips.appendChild(span);
-    });
-  }
-}
 
 // 6. Subpage 02: Projektleitung (Rohbau inkl. Großguss, Gesamtfahrzeug inkl. DMU & Schnittstellen, Drohnen inkl. C-UAS)
 const amgData = {
@@ -614,150 +667,6 @@ function setAmgScope(key) {
     capEl.style.display = d.cap ? '' : 'none';
   }
   if (subEl) subEl.textContent = d.sub;
-}
-
-// 7. Subpage 03: Interactive 3D Point Cloud Scanner
-const canvas = document.getElementById('pointCloudCanvas');
-const ctx = canvas ? canvas.getContext('2d') : null;
-let pcMode = 'cloud';
-let rotY = 0.6, rotX = 0.42;
-let dragging = false, lx = 0, ly = 0, scanT = 0;
-
-const N = 22;
-const pts = [];
-for (let i = 0; i < N; i++) {
-  for (let j = 0; j < N; j++) {
-    const nx = (i / (N - 1)) * 2 - 1;
-    const nz = (j / (N - 1)) * 2 - 1;
-    let ny = Math.sin(nx * 2.4) * Math.cos(nz * 2.4) * 0.17;
-    if (Math.abs(nx) < 0.42 && Math.abs(nz) < 0.32) {
-      ny = -0.42 - (0.15 * (1 - Math.abs(nx) * 1.7));
-    }
-    pts.push({ x: nx * 155, y: ny * 140, z: nz * 155, elev: ny });
-  }
-}
-
-function resizeCanvas() {
-  if (!canvas || !canvas.parentElement) return;
-  const r = canvas.parentElement.getBoundingClientRect();
-  canvas.width = r.width || 640;
-  canvas.height = r.height || 400;
-}
-window.addEventListener('resize', resizeCanvas);
-
-function setPcMode(m) {
-  pcMode = m;
-  ['cloud', 'mesh', 'elev'].forEach(k => {
-    const b = document.getElementById('pc-' + k);
-    if (b) {
-      b.className = (k === m)
-        ? 'px-3.5 py-1.5 rounded-full text-xs font-medium btn-gold'
-        : 'px-3.5 py-1.5 rounded-full text-xs font-medium text-sec';
-    }
-  });
-}
-
-if (canvas) {
-  canvas.addEventListener('mousedown', e => { dragging = true; lx = e.clientX; ly = e.clientY; });
-  window.addEventListener('mouseup', () => { dragging = false; });
-  window.addEventListener('mousemove', e => {
-    if (!dragging) return;
-    rotY += (e.clientX - lx) * 0.008;
-    rotX = Math.max(0.12, Math.min(1.18, rotX + (e.clientY - ly) * 0.006));
-    lx = e.clientX; ly = e.clientY;
-  });
-
-  canvas.addEventListener('touchstart', e => {
-    if (e.touches.length === 1) { dragging = true; lx = e.touches[0].clientX; ly = e.touches[0].clientY; }
-  }, { passive: true });
-  window.addEventListener('touchend', () => { dragging = false; });
-  window.addEventListener('touchmove', e => {
-    if (!dragging || e.touches.length !== 1) return;
-    rotY += (e.touches[0].clientX - lx) * 0.008;
-    rotX = Math.max(0.12, Math.min(1.18, rotX + (e.touches[0].clientY - ly) * 0.006));
-    lx = e.touches[0].clientX; ly = e.touches[0].clientY;
-  }, { passive: true });
-}
-
-function project3D(x, y, z, w, h) {
-  const cy = Math.cos(rotY), sy = Math.sin(rotY);
-  const x1 = x * cy - z * sy, z1 = z * cy + x * sy;
-  const cx = Math.cos(rotX), sx = Math.sin(rotX);
-  const y2 = y * cx - z1 * sx, z2 = z1 * cx + y * sx;
-  const fov = 430;
-  const s = fov / (fov + z2 + 285);
-  return { px: w / 2 + x1 * s, py: h / 2 + y2 * s + 22, s, z: z2 };
-}
-
-function renderScanner() {
-  if (!canvas || !ctx) return;
-  if (canvas.width === 0) resizeCanvas();
-  const w = canvas.width, h = canvas.height;
-  ctx.clearRect(0, 0, w, h);
-
-  if (!dragging) rotY += 0.003;
-  scanT += 0.028;
-  const waveZ = Math.sin(scanT) * 150;
-
-  const proj = pts.map(p => ({ ...p, ...project3D(p.x, p.y, p.z, w, h) }));
-
-  if (pcMode === 'mesh') {
-    ctx.lineWidth = 0.8;
-    for (let i = 0; i < N; i++) {
-      for (let j = 0; j < N; j++) {
-        const idx = i * N + j;
-        const p1 = proj[idx];
-        ctx.strokeStyle = Math.abs(p1.z - waveZ) < 24 ? 'rgba(212, 175, 55, 0.8)' : 'rgba(212, 175, 55, 0.28)';
-        if (j + 1 < N) {
-          const p2 = proj[idx + 1];
-          ctx.beginPath(); ctx.moveTo(p1.px, p1.py); ctx.lineTo(p2.px, p2.py); ctx.stroke();
-        }
-        if (i + 1 < N) {
-          const p3 = proj[(i + 1) * N + j];
-          ctx.beginPath(); ctx.moveTo(p1.px, p1.py); ctx.lineTo(p3.px, p3.py); ctx.stroke();
-        }
-      }
-    }
-  }
-
-  for (let i = 0; i < proj.length; i++) {
-    const p = proj[i];
-    const hit = Math.abs(p.z - waveZ) < 20;
-    const r = Math.max(1.3, p.s * (hit ? 3.2 : 2.2));
-    ctx.beginPath();
-    ctx.arc(p.px, p.py, r, 0, Math.PI * 2);
-
-    if (hit) {
-      ctx.fillStyle = '#E6C65A';
-    } else if (pcMode === 'elev') {
-      ctx.fillStyle = p.elev < -0.25 ? '#D4AF37' : (p.elev < 0 ? '#A1A1AA' : '#52525B');
-    } else {
-      ctx.fillStyle = p.elev < -0.25 ? '#D4AF37' : 'rgba(245, 245, 247, 0.72)';
-    }
-    ctx.fill();
-  }
-
-  // Orbiting Drone Node
-  const da = scanT * 0.75;
-  const d3 = project3D(Math.cos(da) * 85, -140, Math.sin(da) * 85, w, h);
-  const t3 = project3D(0, -25, waveZ * 0.5, w, h);
-
-  const g = ctx.createLinearGradient(d3.px, d3.py, t3.px, t3.py);
-  g.addColorStop(0, 'rgba(212, 175, 55, 0.65)');
-  g.addColorStop(1, 'rgba(212, 175, 55, 0.02)');
-  ctx.strokeStyle = g;
-  ctx.lineWidth = 1.4;
-  ctx.beginPath();
-  ctx.moveTo(d3.px, d3.py); ctx.lineTo(t3.px - 42, t3.py);
-  ctx.moveTo(d3.px, d3.py); ctx.lineTo(t3.px + 42, t3.py);
-  ctx.stroke();
-
-  ctx.fillStyle = '#D4AF37';
-  ctx.beginPath();
-  ctx.arc(d3.px, d3.py, 4.5, 0, Math.PI * 2);
-  ctx.fill();
-
-  requestAnimationFrame(renderScanner);
 }
 
 // 7b. Animation: Drohnenscan -> Punktwolke -> Mesh -> 3D-Objekt -> Marketing-Asset
@@ -1221,13 +1130,8 @@ window.addEventListener('DOMContentLoaded', () => {
   runIntro();
   initCardFocus();
   setAmgScope('rohbau');
-  setAiScope('bedarf');
   resizeBgCanvas();
   showView(viewFromHash());
-  resizeCanvas();
-  requestAnimationFrame(renderScanner);
   ScanFlow.start();
-  const arch = document.getElementById('pcArchive');
-  if (arch) arch.addEventListener('toggle', () => { resizeCanvas(); });
   requestAnimationFrame(renderAmbientBg);
 });
