@@ -354,48 +354,75 @@
             </ol>
           </div>
 
-          <div class="flex flex-wrap items-center justify-between gap-4 mb-6 pt-6 border-t border-hair">
-            <div>
-              <span class="font-mono text-xs text-gold font-semibold">INHALTE</span>
-              <h2 class="text-xl sm:text-2xl font-bold mt-0.5">Bedarfsanalyse, EU AI Act &amp; Datenschutz</h2>
-            </div>
+          <div class="pt-6 border-t border-hair">
+            <span class="font-mono text-xs text-gold font-semibold">INHALTE</span>
+            <div class="grid md:grid-cols-2 gap-5 mt-3">
 
-            <div class="grid grid-cols-2 gap-1 p-1 ios-pill w-full sm:w-auto">
-              <button onclick="setAiScope('bedarf')" id="ai-btn-bedarf" class="scope-btn scope-on">Bedarfsanalyse</button>
-              <button onclick="setAiScope('aiact')" id="ai-btn-aiact" class="scope-btn">EU AI Act &amp; Datenschutz</button>
-            </div>
-          </div>
-
-          <div class="grid lg:grid-cols-12 gap-7 items-stretch">
-            <div class="lg:col-span-7 space-y-4">
-              <div class="ios-solid p-6 space-y-3 h-full">
-                <span class="font-mono text-[11px] text-gold font-semibold uppercase tracking-wider">Themen</span>
-                <div id="aiChips" class="flex flex-wrap gap-2 mt-3"></div>
-              </div>
-            </div>
-
-            <div class="lg:col-span-5 space-y-4">
-              <div class="ios-solid p-6 space-y-3">
-                <span id="aiTag" class="font-mono text-xs text-gold font-semibold">SCHWERPUNKT // BEDARFSANALYSE</span>
-                <h3 id="aiHeading" class="text-2xl font-bold">Bedarfsanalyse</h3>
-                <p id="aiCopy" class="text-sm text-sec leading-relaxed"></p>
-              </div>
-
-              <div class="grid grid-cols-2 gap-3">
-                <div class="ios-solid p-4">
-                  <span id="aiStat1Label" class="font-mono text-[10px] text-mut block">FORMAT</span>
-                  <span id="aiStat1" class="font-mono text-xs sm:text-sm font-bold text-gold">Individuell, 1:1</span>
+              <article class="topic-card ios-solid p-6 flex flex-col gap-5">
+                <svg class="topic-art w-full h-24" viewBox="0 0 320 96" role="img" aria-label="Vom Bedarf über KI zum Ergebnis">
+                  <line x1="56" y1="44" x2="138" y2="44" class="art-flow"/>
+                  <line x1="182" y1="44" x2="264" y2="44" class="art-flow"/>
+                  <g class="art-node"><circle cx="40" cy="44" r="16"/><text x="40" y="49" text-anchor="middle">?</text></g>
+                  <g class="art-node art-node-main"><circle cx="160" cy="44" r="22"/><text x="160" y="49" text-anchor="middle">KI</text></g>
+                  <g class="art-node"><circle cx="280" cy="44" r="16"/><path d="M272 44l6 6 11-12" fill="none"/></g>
+                  <circle r="3.5" class="art-dot"><animateMotion dur="2.8s" repeatCount="indefinite" path="M56 44 H264"/></circle>
+                  <text x="40" y="82" class="art-label" text-anchor="middle">Bedarf</text>
+                  <text x="160" y="82" class="art-label" text-anchor="middle">KI-Lösung</text>
+                  <text x="280" y="82" class="art-label" text-anchor="middle">Ergebnis</text>
+                </svg>
+                <div>
+                  <h3 class="text-2xl font-bold">Bedarfsanalyse &amp; Coaching</h3>
+                  <p class="text-sm text-sec mt-1">Du lernst genau das, was du brauchst. 1:1 und auf deinen Fall zugeschnitten.</p>
                 </div>
-                <div class="ios-solid p-4">
-                  <span id="aiStat2Label" class="font-mono text-[10px] text-mut block">ORT</span>
-                  <span id="aiStat2" class="font-mono text-xs sm:text-sm font-bold">Video-Call oder vor Ort</span>
+                <ul class="space-y-2.5 text-sm">
+                <li class="flex gap-3 items-start"><svg class="w-4 h-4 mt-0.5 text-gold shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" d="M5 13l4 4L19 7"/></svg><span>Individuelles Coaching</span></li>
+                <li class="flex gap-3 items-start"><svg class="w-4 h-4 mt-0.5 text-gold shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" d="M5 13l4 4L19 7"/></svg><span>Prompts &amp; Vorlagen</span></li>
+                <li class="flex gap-3 items-start"><svg class="w-4 h-4 mt-0.5 text-gold shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" d="M5 13l4 4L19 7"/></svg><span>Tools &amp; Workflows</span></li>
+                <li class="flex gap-3 items-start"><svg class="w-4 h-4 mt-0.5 text-gold shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" d="M5 13l4 4L19 7"/></svg><span>KI-Grundlagen</span></li>
+                <li class="flex gap-3 items-start"><svg class="w-4 h-4 mt-0.5 text-gold shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" d="M5 13l4 4L19 7"/></svg><span>Foto- &amp; Videoerstellung mit KI</span></li>
+                </ul>
+                <div class="mt-auto pt-2 flex flex-wrap gap-2">
+                  <span class="px-3 py-1 ios-pill font-mono text-[11px] font-semibold border border-[#D4AF37]/40">1:1</span>
+                  <span class="px-3 py-1 ios-pill font-mono text-[11px] font-semibold border border-[#D4AF37]/40">Video-Call oder vor Ort</span>
                 </div>
-              </div>
+              </article>
 
-              <div class="pt-1 flex flex-col sm:flex-row gap-3">
-                <button onclick="openDirectProjectInquiry()" class="flex-1 py-3 btn-gold text-xs font-mono">Direkte Projektanfrage →</button>
-                <button onclick="navigateTo('founder')" class="flex-1 py-3 btn-primary text-xs font-mono">Gratis-Call anfragen</button>
-              </div>
+              <article class="topic-card ios-solid p-6 flex flex-col gap-5">
+                <svg class="topic-art w-full h-24" viewBox="0 0 320 96" role="img" aria-label="Schild mit Haken zwischen AI Act und DSGVO">
+                  <line x1="104" y1="44" x2="132" y2="44" class="art-flow"/>
+                  <line x1="188" y1="44" x2="216" y2="44" class="art-flow"/>
+                  <rect x="16" y="30" width="88" height="28" rx="14" class="art-tag"/>
+                  <text x="60" y="48" text-anchor="middle" class="art-tag-text">AI Act</text>
+                  <rect x="216" y="30" width="88" height="28" rx="14" class="art-tag"/>
+                  <text x="260" y="48" text-anchor="middle" class="art-tag-text">DSGVO</text>
+                  <circle cx="160" cy="46" r="30" class="art-ring"/>
+                  <path d="M160 18l22 8v20c0 14-10 24-22 28-12-4-22-14-22-28V26z" class="art-shield"/>
+                  <path d="M150 46l8 8 14-15" fill="none" class="art-check"/>
+                  <text x="60" y="82" class="art-label" text-anchor="middle">Pflichten</text>
+                  <text x="260" y="82" class="art-label" text-anchor="middle">Datenschutz</text>
+                </svg>
+                <div>
+                  <h3 class="text-2xl font-bold">EU AI Act &amp; Datenschutz</h3>
+                  <p class="text-sm text-sec mt-1">KI rechtssicher einsetzen: verständlich erklärt, direkt umsetzbar.</p>
+                </div>
+                <ul class="space-y-2.5 text-sm">
+                <li class="flex gap-3 items-start"><svg class="w-4 h-4 mt-0.5 text-gold shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" d="M5 13l4 4L19 7"/></svg><span>KI-Kompetenz (Art. 4), gilt seit Februar 2025</span></li>
+                <li class="flex gap-3 items-start"><svg class="w-4 h-4 mt-0.5 text-gold shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" d="M5 13l4 4L19 7"/></svg><span>Rollen &amp; Pflichten im Unternehmen</span></li>
+                <li class="flex gap-3 items-start"><svg class="w-4 h-4 mt-0.5 text-gold shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" d="M5 13l4 4L19 7"/></svg><span>Fristen &amp; Stufen</span></li>
+                <li class="flex gap-3 items-start"><svg class="w-4 h-4 mt-0.5 text-gold shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" d="M5 13l4 4L19 7"/></svg><span>KI und DSGVO</span></li>
+                <li class="flex gap-3 items-start"><svg class="w-4 h-4 mt-0.5 text-gold shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" d="M5 13l4 4L19 7"/></svg><span>Umsetzung im Alltag</span></li>
+                </ul>
+                <div class="mt-auto pt-2 flex flex-wrap gap-2">
+                  <span class="px-3 py-1 ios-pill font-mono text-[11px] font-semibold border border-[#D4AF37]/40">Orientierung &amp; Umsetzung</span>
+                  <span class="px-3 py-1 ios-pill font-mono text-[11px] font-semibold text-mut">Keine Rechtsberatung</span>
+                </div>
+              </article>
+
+            </div>
+
+            <div class="pt-6 flex flex-col sm:flex-row gap-3">
+              <button onclick="openDirectProjectInquiry()" class="flex-1 py-3 btn-gold text-xs font-mono">Direkte Projektanfrage →</button>
+              <button onclick="navigateTo('founder')" class="flex-1 py-3 btn-primary text-xs font-mono">Gratis-Call anfragen</button>
             </div>
           </div>
         </div>
@@ -428,38 +455,7 @@
           </div>
         </div>
 
-        <details id="pcArchive" class="archive mb-10">
-          <summary class="ios-card px-6 py-4 cursor-pointer flex items-center justify-between gap-4">
-            <span><span class="font-mono text-xs text-gold font-semibold">ARCHIV</span> <span class="text-sm font-semibold ml-2">Interaktiver 3D-Scanner (Punktwolke)</span></span>
-            <span class="archive-chevron text-mut text-xs font-mono">öffnen</span>
-          </summary>
-          <div class="mt-4">
-<div class="ios-card p-6 sm:p-8 mb-10">
-          <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
-            <div>
-              <span class="font-mono text-xs text-gold font-semibold">INTERAKTIVER 3D-SCANNER</span>
-              <h2 class="text-xl font-bold mt-0.5">Drohnen-Photogrammetrie: Punktwolke & 3D-Objekt</h2>
-            </div>
 
-            <div class="flex items-center gap-1.5 p-1 ios-pill">
-              <button onclick="setPcMode('cloud')" id="pc-cloud" class="px-3.5 py-1.5 rounded-full text-xs font-medium btn-gold">Punktwolke</button>
-              <button onclick="setPcMode('mesh')" id="pc-mesh" class="px-3.5 py-1.5 rounded-full text-xs font-medium text-sec">3D-Mesh</button>
-              <button onclick="setPcMode('elev')" id="pc-elev" class="px-3.5 py-1.5 rounded-full text-xs font-medium text-sec">Höhenprofil</button>
-            </div>
-          </div>
-
-          <div class="relative rounded-3xl overflow-hidden bg-[#111113] h-[360px] sm:h-[420px] border border-white/10">
-            <canvas id="pointCloudCanvas" class="w-full h-full cursor-grab active:cursor-grabbing"></canvas>
-            <div class="absolute top-4 left-5 pointer-events-none font-mono text-[11px] text-white/70">
-              UAV-SCANNER AKTIV · <span class="text-[#D4AF37]">GSD 1.2 CM/PX</span>
-            </div>
-            <div class="absolute bottom-4 right-5 pointer-events-none font-mono text-[11px] text-white/60 bg-white/10 px-3 py-1 rounded-full backdrop-blur-md">
-              Ziehen zum Drehen
-            </div>
-          </div>
-        </div>
-          </div>
-        </details>
 
         <div class="ios-card p-6 sm:p-9 mb-10">
           <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
@@ -555,16 +551,50 @@
 
         <div class="grid md:grid-cols-3 gap-6 mb-10">
           <div class="ios-card p-6 space-y-2">
+            <div class="media-art ios-solid rounded-2xl mb-4"><svg viewBox="0 0 240 140" class="w-full h-36" role="img" aria-label="Smartphone mit Video, Herzen steigen auf">
+              <rect x="88" y="10" width="64" height="120" rx="12" class="art-frame"/>
+              <rect x="96" y="22" width="48" height="84" rx="5" class="art-screen"/>
+              <path d="M114 54l16 10-16 10z" class="art-play"/>
+              <rect x="100" y="112" width="40" height="4" rx="2" class="art-bar"/>
+              <path d="M62 96c-6-5-10-9-10-13a5 5 0 0110-1 5 5 0 0110 1c0 4-4 8-10 13z" class="art-heart art-float a1"/>
+              <path d="M184 90c-5-4-8-7-8-10a4 4 0 018-1 4 4 0 018 1c0 3-3 6-8 10z" class="art-heart art-float a2"/>
+              <rect x="170" y="40" width="42" height="16" rx="8" class="art-bubble art-float a3"/>
+              <rect x="28" y="52" width="38" height="14" rx="7" class="art-bubble art-float a2"/>
+            </svg></div>
             <span class="font-mono text-xs text-gold font-semibold">01 // UGC-CONTENT</span>
             <h3 class="text-lg font-bold">Content im Creator-Stil</h3>
             <p class="text-sm text-sec">Authentische Kurzvideos und Posts für Social Media, produziert für dein Produkt oder deine Marke.</p>
           </div>
           <div class="ios-card p-6 space-y-2">
+            <div class="media-art ios-solid rounded-2xl mb-4"><svg viewBox="0 0 240 140" class="w-full h-36" role="img" aria-label="Kamera-Sucher mit Aufnahme und Schnitt-Zeitleiste">
+              <path d="M30 40V20h20M210 40V20h-20M30 84v20h20M210 84v20h-20" class="art-bracket"/>
+              <rect x="96" y="44" width="48" height="36" rx="4" class="art-focus"/>
+              <circle cx="120" cy="62" r="3" class="art-dot-static"/>
+              <circle cx="38" cy="30" r="4" class="art-rec"/>
+              <text x="48" y="34" class="art-label">REC</text>
+              <rect x="30" y="112" width="180" height="14" rx="4" class="art-track"/>
+              <rect x="34" y="115" width="48" height="8" rx="2" class="art-clip"/>
+              <rect x="86" y="115" width="62" height="8" rx="2" class="art-clip c2"/>
+              <rect x="152" y="115" width="54" height="8" rx="2" class="art-clip"/>
+              <rect x="34" y="108" width="2" height="22" class="art-playhead"/>
+            </svg></div>
             <span class="font-mono text-xs text-gold font-semibold">02 // FOTO &amp; VIDEO</span>
             <h3 class="text-lg font-bold">Medienproduktion</h3>
             <p class="text-sm text-sec">Hochwertige Foto- und Filmaufnahmen am Boden und aus der Luft, Schnitt und Grading. Professioneller Look mit Einsatz visionärer KI möglich.</p>
           </div>
           <div class="ios-card p-6 space-y-2">
+            <div class="media-art ios-solid rounded-2xl mb-4"><svg viewBox="0 0 240 140" class="w-full h-36" role="img" aria-label="Browserfenster mit Website-Layout">
+              <rect x="30" y="14" width="180" height="112" rx="10" class="art-frame"/>
+              <circle cx="44" cy="26" r="3" class="art-dot-static"/><circle cx="55" cy="26" r="3" class="art-dot-static"/><circle cx="66" cy="26" r="3" class="art-dot-static"/>
+              <line x1="30" y1="38" x2="210" y2="38" class="art-line"/>
+              <rect x="44" y="50" width="70" height="8" rx="3" class="art-bar art-grow"/>
+              <rect x="44" y="64" width="52" height="5" rx="2" class="art-line-fill"/>
+              <rect x="44" y="74" width="60" height="5" rx="2" class="art-line-fill"/>
+              <rect x="44" y="90" width="30" height="12" rx="6" class="art-play"/>
+              <rect x="128" y="50" width="68" height="62" rx="6" class="art-screen"/>
+              <path d="M138 100l16-22 12 14 10-10 14 18z" class="art-hill"/>
+              <path d="M178 82l0 18 5-5 5 10 3-2-5-10 7-1z" class="art-cursor art-cursor-move"/>
+            </svg></div>
             <span class="font-mono text-xs text-gold font-semibold">03 // WEBAUFTRITT</span>
             <h3 class="text-lg font-bold">Website-Design</h3>
             <p class="text-sm text-sec">Schnelle, ästhetische Webseiten, die Film, Foto und 3D-Inhalte nahtlos präsentieren.</p>
