@@ -8,6 +8,8 @@ let isDark = false;
 function initTheme() {
   const h = new Date().getHours();
   isDark = (h < 7 || h >= 19);
+  const tp = /[?&]theme=(dark|light)/.exec(location.search);        // Vorschau-Rahmen bekommt das Theme der Elternseite
+  if (tp) isDark = tp[1] === 'dark';
   applyTheme();
 }
 
@@ -22,6 +24,7 @@ function applyTheme() {
 function toggleTheme() {
   isDark = !isDark;
   applyTheme();
+  if (typeof syncPreviewTheme === 'function') syncPreviewTheme();
 }
 
 // 2. SLOWER Mini Drones Flying Out of the 'dw' Circle on Top-Left Hover
@@ -46,9 +49,9 @@ function spawnLogoDrones(e) {
     drone.style.left = startX + 'px';
     drone.style.top = startY + 'px';
 
-    // Crisp Black & Gold Quadcopter SVG (28x28px for clear visibility)
+    // Crisp Black & Gold Quadcopter SVG (16x16px)
     drone.innerHTML = `
-      <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+      <svg width="16" height="16" viewBox="0 0 28 28" fill="none">
         <path d="M6 6L22 22M22 6L6 22" stroke="#D4AF37" stroke-width="2" stroke-linecap="round"/>
         <circle cx="14" cy="14" r="3.6" fill="#111113" stroke="#D4AF37" stroke-width="1.6"/>
         <circle cx="6" cy="6" r="4" stroke="#D4AF37" stroke-width="1.4" stroke-dasharray="2 2"/>
@@ -85,7 +88,7 @@ function spawnLogoDrones(e) {
 // 3. AMBIENT BACKGROUND EFFECT BEHIND THE 3 MAIN CARDS
 const bgCanvas = document.getElementById('ambientBgCanvas');
 const bgCtx = bgCanvas ? bgCanvas.getContext('2d') : null;
-let activeEffect = null; // 'neural' | 'milestones' | 'digital3d' | null
+let activeEffect = null; // 'neural' | 'media' | 'scan' | null
 let effectOrigin = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
 let spreadRadius = 0;
 let effectAlpha = 0;
@@ -94,28 +97,19 @@ let bgTime = 0;
 
 // Pre-generate nodes for smooth animations
 const neuralNodes = Array.from({ length: 44 }, () => ({
-  x: Math.random(),
-  y: Math.random(),
-  vx: (Math.random() - 0.5) * 0.0005,
-  vy: (Math.random() - 0.5) * 0.0005,
+  bx: 0.06 + Math.random() * 0.88,
+  by: 0.08 + Math.random() * 0.84,
+  ax: 0.01 + Math.random() * 0.03, ay: 0.01 + Math.random() * 0.03,
+  fx: 0.15 + Math.random() * 0.25, fy: 0.15 + Math.random() * 0.25,
+  ph: Math.random() * Math.PI * 2,
   r: 2 + Math.random() * 2.5
 }));
 
-const milestoneTracks = [
-  { yRatio: 0.24, label: 'M1 // KONZEPT & CAD', phase: 0.1 },
-  { yRatio: 0.42, label: 'M2 // DMU & FREIGABE', phase: 0.35 },
-  { yRatio: 0.60, label: 'M3 // PROTOTYP & TOOLING', phase: 0.6 },
-  { yRatio: 0.78, label: 'SOP // SERIENANLAUF', phase: 0.82 }
-];
-
-const digitalItems = Array.from({ length: 18 }, (_, idx) => ({
-  x: (idx % 6 + 0.5) / 6 + (Math.random() * 0.08 - 0.04),
-  y: (Math.floor(idx / 6) + 0.5) / 3 + (Math.random() * 0.1 - 0.05),
-  type: idx % 3, // 0: 3D cube, 1: IT symbol, 2: 3D axis
-  sym: ['</>', '{ }', '[3D]', 'UAV', 'AI', 'CAD'][idx % 6],
-  speed: 0.6 + Math.random() * 0.6,
-  offset: Math.random() * Math.PI * 2
-}));
+// Kleine feste Zufallsfolge (stabile Punktwolke für den Scan-Effekt)
+const scanPts = Array.from({ length: 110 }, (_, i) => {
+  const h = k => { const v = Math.sin((i + 1) * k) * 43758.5453; return v - Math.floor(v); };
+  return { x: h(12.9898), y: h(78.233), z: h(37.719) };
+});
 
 function resizeBgCanvas() {
   if (!bgCanvas) return;
@@ -140,6 +134,141 @@ function activateCardBgEffect(type, cardEl) {
 
 function deactivateCardBgEffect() {
   isHoveringCard = false;
+}
+
+// Effekt-Zeichner: gleiche Optik als Seitenhintergrund (ganze Fläche) und als leiser Hintergrund in der Kachel
+function drawNeural(c, ax, ay, aw, ah, A, t, o, col) {
+  const P = [];
+  for (let i = 0; i < o.n; i++) {
+    const n = neuralNodes[i];
+    P.push([ax + (n.bx + Math.sin(t * n.fx + n.ph) * n.ax) * aw, ay + (n.by + Math.sin(t * n.fy + n.ph * 1.7) * n.ay) * ah]);
+  }
+  for (let i = 0; i < o.n; i++) {
+    for (let j = i + 1; j < o.n; j++) {
+      const d = Math.hypot(P[i][0] - P[j][0], P[i][1] - P[j][1]);
+      if (d >= o.link) continue;
+      c.strokeStyle = `rgba(${col.gold}, ${(1 - d / o.link) * 0.26 * A})`;
+      c.lineWidth = 1.1;
+      c.beginPath(); c.moveTo(P[i][0], P[i][1]); c.lineTo(P[j][0], P[j][1]); c.stroke();
+      if ((i + j) % 5 === 0) {                                   // Synapsen-Puls
+        const k = (t * 0.45 + i * 0.17) % 1;
+        c.fillStyle = `rgba(${col.gold}, ${0.65 * A})`;
+        c.beginPath(); c.arc(P[i][0] + (P[j][0] - P[i][0]) * k, P[i][1] + (P[j][1] - P[i][1]) * k, 2.2 * o.rs, 0, Math.PI * 2); c.fill();
+      }
+    }
+    c.fillStyle = `rgba(${col.gold}, ${0.45 * A})`;
+    c.beginPath(); c.arc(P[i][0], P[i][1], neuralNodes[i].r * o.rs, 0, Math.PI * 2); c.fill();
+  }
+}
+
+function drawMedia(c, ax, ay, aw, ah, A, t, o, col) {
+  const s = o.s, G = col.gold;
+  c.lineWidth = 1.1;
+  // Ein Filmstreifen läuft unten durch das Bild
+  [[0.73, -1]].forEach(([fy, dir]) => {
+    const y = ay + ah * fy, sh = 46 * s, fw = 62 * s, gap = 10 * s, step = fw + gap;
+    const off = ((t * 28 * s * dir) % step + step) % step;
+    c.strokeStyle = `rgba(${G}, ${0.22 * A})`;
+    c.beginPath(); c.moveTo(ax, y - sh / 2 - 5 * s); c.lineTo(ax + aw, y - sh / 2 - 5 * s); c.moveTo(ax, y + sh / 2 + 5 * s); c.lineTo(ax + aw, y + sh / 2 + 5 * s); c.stroke();
+    for (let x = ax - step + off; x < ax + aw; x += step) {
+      c.fillStyle = `rgba(${G}, ${0.07 * A})`;
+      c.strokeStyle = `rgba(${G}, ${0.4 * A})`;
+      c.fillRect(x, y - sh / 2, fw, sh); c.strokeRect(x, y - sh / 2, fw, sh);
+      c.fillStyle = `rgba(${G}, ${0.3 * A})`;
+      c.fillRect(x + 6 * s, y - sh / 2 - 4 * s, 5 * s, 3 * s); c.fillRect(x + fw - 11 * s, y - sh / 2 - 4 * s, 5 * s, 3 * s);
+    }
+  });
+  // Play-Symbol in der Mitte, pulsiert
+  const pc = [ax + aw / 2, ay + ah / 2], pr = (24 + Math.sin(t * 2) * 2.5) * s;
+  c.strokeStyle = `rgba(${G}, ${0.5 * A})`; c.lineWidth = 1.6;
+  c.beginPath(); c.arc(pc[0], pc[1], pr, 0, Math.PI * 2); c.stroke();
+  c.fillStyle = `rgba(${G}, ${0.55 * A})`;
+  c.beginPath(); c.moveTo(pc[0] - pr * 0.28, pc[1] - pr * 0.42); c.lineTo(pc[0] + pr * 0.5, pc[1]); c.lineTo(pc[0] - pr * 0.28, pc[1] + pr * 0.42); c.closePath(); c.fill();
+  // Sucher-Ecken und REC
+  const m = Math.min(aw, ah) * 0.06 + 8, L = 26 * s, top = ay + ah * 0.17;      // obere Sucherecken und REC weiter unten
+  c.strokeStyle = `rgba(${G}, ${0.5 * A})`; c.lineWidth = 1.6;
+  c.beginPath();
+  c.moveTo(ax + m, top + L); c.lineTo(ax + m, top); c.lineTo(ax + m + L, top);
+  c.moveTo(ax + aw - m - L, top); c.lineTo(ax + aw - m, top); c.lineTo(ax + aw - m, top + L);
+  c.moveTo(ax + m, ay + ah - m - L); c.lineTo(ax + m, ay + ah - m); c.lineTo(ax + m + L, ay + ah - m);
+  c.moveTo(ax + aw - m - L, ay + ah - m); c.lineTo(ax + aw - m, ay + ah - m); c.lineTo(ax + aw - m, ay + ah - m - L);
+  c.stroke();
+  if (Math.sin(t * 4) > -0.2) { c.fillStyle = `rgba(220, 70, 60, ${0.75 * A})`; c.beginPath(); c.arc(ax + m + 8 * s, top + 14 * s + L, 3.5 * s, 0, Math.PI * 2); c.fill(); }
+  c.fillStyle = `rgba(${col.sec}, ${0.45 * A})`; c.font = `600 ${Math.round(10 * s + 1)}px monospace`;
+  c.fillText('REC', ax + m + 16 * s, top + 18 * s + L);
+  // Zeitleiste mit Clips und Abspielkopf
+  const ty = ay + ah - m - 14 * s - L * 0.2 - 8, tx0 = ax + m + L + 6, tx1 = ax + aw - m - L - 6;
+  if (tx1 > tx0 + 40) {
+    c.strokeStyle = `rgba(${G}, ${0.25 * A})`; c.lineWidth = 1;
+    c.beginPath(); c.moveTo(tx0, ty); c.lineTo(tx1, ty); c.stroke();
+    [[0.0, 0.3], [0.34, 0.31], [0.69, 0.31]].forEach(([a0, a1], k) => {
+      c.fillStyle = `rgba(${G}, ${(k === 1 ? 0.22 : 0.12) * A})`;
+      c.fillRect(tx0 + (tx1 - tx0) * a0, ty - 5 * s, (tx1 - tx0) * a1, 10 * s);
+    });
+    const hx = tx0 + (tx1 - tx0) * ((t * 0.12) % 1);
+    c.fillStyle = `rgba(${G}, ${0.8 * A})`; c.fillRect(hx - 1, ty - 11 * s, 2, 22 * s);
+  }
+}
+
+function drawScan(c, ax, ay, aw, ah, A, t, o, col) {
+  const s = o.s, G = col.gold;
+  const beamY = ay + ah * ((t * 0.2) % 1);
+  // Punktwolke, leuchtet auf, wo der Scanstrahl vorbeiläuft
+  scanPts.forEach(p => {
+    const x = ax + p.x * aw, y = ay + p.y * ah + Math.sin(t * 0.8 + p.z * 6) * 2 * s;
+    const near = Math.max(0, 1 - Math.abs(y - beamY) / (ah * 0.12));
+    c.fillStyle = `rgba(${G}, ${(0.16 + 0.7 * near) * A})`;
+    c.beginPath(); c.arc(x, y, (1.1 + p.z * 0.9 + near * 1.2) * s, 0, Math.PI * 2); c.fill();
+  });
+  // Scanstrahl
+  const g = c.createLinearGradient(ax, 0, ax + aw, 0);
+  g.addColorStop(0, `rgba(${G}, 0)`); g.addColorStop(0.5, `rgba(${G}, ${0.6 * A})`); g.addColorStop(1, `rgba(${G}, 0)`);
+  c.strokeStyle = g; c.lineWidth = 1.4;
+  c.beginPath(); c.moveTo(ax, beamY); c.lineTo(ax + aw, beamY); c.stroke();
+  // Drehende Drahtgitter-Würfel (3D-Modelle)
+  const spots = [[0.2, 0.3], [0.78, 0.62], [0.45, 0.8], [0.85, 0.2], [0.12, 0.72], [0.55, 0.45]];
+  for (let k = 0; k < o.cubes; k++) {
+    const cx = ax + spots[k][0] * aw, cy = ay + spots[k][1] * ah + Math.sin(t * 0.7 + k) * 6 * s, a = t * 0.6 + k * 1.3, sz = (16 + (k % 3) * 5) * s;
+    const pts = [[-1, -1, -1], [1, -1, -1], [1, 1, -1], [-1, 1, -1], [-1, -1, 1], [1, -1, 1], [1, 1, 1], [-1, 1, 1]].map(([x, y, z]) => {
+      const rx = x * Math.cos(a) - z * Math.sin(a), rz = z * Math.cos(a) + x * Math.sin(a), ry = y * Math.cos(0.5) - rz * Math.sin(0.5);
+      return [cx + rx * sz, cy + ry * sz];
+    });
+    c.strokeStyle = `rgba(${G}, ${0.38 * A})`; c.lineWidth = 1.1;
+    c.beginPath();
+    [[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]].forEach(([i, j]) => { c.moveTo(pts[i][0], pts[i][1]); c.lineTo(pts[j][0], pts[j][1]); });
+    c.stroke();
+  }
+  // Drohne fliegt über das Gelände
+  const dx = ax + aw * (0.5 + 0.38 * Math.sin(t * 0.45)), dy = ay + ah * (0.14 + 0.04 * Math.sin(t * 1.3)), L = 11 * s;
+  c.strokeStyle = `rgba(${G}, ${0.7 * A})`; c.lineWidth = 1.4;
+  c.beginPath(); c.moveTo(dx - L, dy - L * 0.6); c.lineTo(dx + L, dy + L * 0.6); c.moveTo(dx - L, dy + L * 0.6); c.lineTo(dx + L, dy - L * 0.6); c.stroke();
+  [[-1, -0.6], [1, 0.6], [-1, 0.6], [1, -0.6]].forEach(([ux, uy], k) => {
+    const rr = L * 0.5 * (0.8 + 0.2 * Math.sin(t * 30 + k));
+    c.beginPath(); c.ellipse(dx + ux * L, dy + uy * L, rr, rr * 0.35, 0, 0, Math.PI * 2); c.stroke();
+  });
+  c.fillStyle = `rgba(${G}, ${0.8 * A})`; c.beginPath(); c.arc(dx, dy, 2.2 * s, 0, Math.PI * 2); c.fill();
+}
+
+// Leise Variante der Effekte direkt im Hintergrund jeder Kachel
+function drawTileFx() {
+  const home = document.getElementById('view-home');
+  if (!home || !home.classList.contains('active')) return;
+  const col = { gold: isDark ? '212, 175, 55' : '182, 141, 64', sec: isDark ? '245, 245, 247' : '40, 40, 45' };
+  const t = performance.now() / 1000, dpr = Math.min(window.devicePixelRatio || 1, 2);
+  document.querySelectorAll('.tile-fx').forEach(cv => {
+    const w = cv.clientWidth, h = cv.clientHeight;
+    if (!w || !h) return;
+    if (cv.width !== Math.round(w * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); }
+    const c = cv.getContext('2d');
+    c.setTransform(dpr, 0, 0, dpr, 0, 0);
+    c.clearRect(0, 0, w, h);
+    const card = cv.parentElement, hot = card.matches(':hover') || card.classList.contains('in-focus');
+    cv._a = (cv._a === undefined ? 0 : cv._a) + ((hot ? 0.75 : 0.4) - (cv._a || 0)) * 0.08;
+    const type = cv.dataset.fx;
+    if (type === 'neural') drawNeural(c, 0, 0, w, h, cv._a, t, { n: 20, link: 120, rs: 0.8 }, col);
+    if (type === 'media') drawMedia(c, 0, 0, w, h, cv._a, t, { s: 0.7 }, col);
+    if (type === 'scan') drawScan(c, 0, 0, w, h, cv._a, t, { s: 0.75, cubes: 3 }, col);
+  });
 }
 
 function renderAmbientBg() {
@@ -181,349 +310,158 @@ function renderAmbientBg() {
     bgCtx.arc(effectOrigin.x, effectOrigin.y, spreadRadius, 0, Math.PI * 2);
     bgCtx.clip();
 
-    // EFFECT 1: CONSULTING -> NEURAL NETWORK
-    if (activeEffect === 'neural') {
-      for (let i = 0; i < neuralNodes.length; i++) {
-        const n = neuralNodes[i];
-        n.x += n.vx;
-        n.y += n.vy;
-        if (n.x < 0.04 || n.x > 0.96) n.vx *= -1;
-        if (n.y < 0.06 || n.y > 0.94) n.vy *= -1;
-
-        const px = n.x * w;
-        const py = n.y * h;
-
-        for (let j = i + 1; j < neuralNodes.length; j++) {
-          const m = neuralNodes[j];
-          const qx = m.x * w;
-          const qy = m.y * h;
-          const dist = Math.hypot(px - qx, py - qy);
-          if (dist < 210) {
-            const lineAlpha = (1 - dist / 210) * 0.26 * effectAlpha;
-            bgCtx.strokeStyle = `rgba(${goldRGB}, ${lineAlpha})`;
-            bgCtx.lineWidth = 1.1;
-            bgCtx.beginPath();
-            bgCtx.moveTo(px, py);
-            bgCtx.lineTo(qx, qy);
-            bgCtx.stroke();
-
-            // Synaptic pulse along connection
-            if ((i + j) % 5 === 0) {
-              const t = (bgTime * 0.45 + i * 0.17) % 1;
-              const sx = px + (qx - px) * t;
-              const sy = py + (qy - py) * t;
-              bgCtx.fillStyle = `rgba(${goldRGB}, ${0.65 * effectAlpha})`;
-              bgCtx.beginPath();
-              bgCtx.arc(sx, sy, 2.2, 0, Math.PI * 2);
-              bgCtx.fill();
-            }
-          }
-        }
-
-        bgCtx.fillStyle = `rgba(${goldRGB}, ${0.45 * effectAlpha})`;
-        bgCtx.beginPath();
-        bgCtx.arc(px, py, n.r, 0, Math.PI * 2);
-        bgCtx.fill();
-      }
-    }
-
-    // EFFECT 2: PROJEKTLEITUNG -> MILESTONES & PROJECT PLANNING
-    if (activeEffect === 'milestones') {
-      bgCtx.font = '500 10px monospace';
-      milestoneTracks.forEach((track, idx) => {
-        const y = track.yRatio * h;
-        const startX = w * 0.08;
-        const endX = w * 0.92;
-
-        // Timeline baseline
-        bgCtx.strokeStyle = `rgba(${goldRGB}, ${0.22 * effectAlpha})`;
-        bgCtx.lineWidth = 1;
-        bgCtx.setLineDash([6, 6]);
-        bgCtx.beginPath();
-        bgCtx.moveTo(startX, y);
-        bgCtx.lineTo(endX, y);
-        bgCtx.stroke();
-        bgCtx.setLineDash([]);
-
-        // Gantt bar segment
-        const barStart = startX + (endX - startX) * (0.08 + idx * 0.18);
-        const barWidth = (endX - startX) * (0.22 + Math.sin(bgTime * 0.8 + idx) * 0.03);
-        bgCtx.fillStyle = `rgba(${goldRGB}, ${0.14 * effectAlpha})`;
-        bgCtx.strokeStyle = `rgba(${goldRGB}, ${0.45 * effectAlpha})`;
-        bgCtx.lineWidth = 1.2;
-        bgCtx.beginPath();
-        if (bgCtx.roundRect) {
-          bgCtx.roundRect(barStart, y - 10, barWidth, 20, 6);
-        } else {
-          bgCtx.rect(barStart, y - 10, barWidth, 20);
-        }
-        bgCtx.fill();
-        bgCtx.stroke();
-
-        // Milestone Diamond Gate
-        const gateX = barStart + barWidth;
-        bgCtx.save();
-        bgCtx.translate(gateX, y);
-        bgCtx.rotate(Math.PI / 4);
-        bgCtx.fillStyle = `rgba(${goldRGB}, ${0.8 * effectAlpha})`;
-        bgCtx.fillRect(-5, -5, 10, 10);
-        bgCtx.restore();
-
-        // Label
-        bgCtx.fillStyle = `rgba(${secRGB}, ${0.45 * effectAlpha})`;
-        bgCtx.fillText(track.label, barStart + 10, y + 3.5);
-
-        // Dependency connector to next track
-        if (idx < milestoneTracks.length - 1) {
-          const nextY = milestoneTracks[idx + 1].yRatio * h;
-          const nextStart = startX + (endX - startX) * (0.08 + (idx + 1) * 0.18);
-          bgCtx.strokeStyle = `rgba(${goldRGB}, ${0.28 * effectAlpha})`;
-          bgCtx.beginPath();
-          bgCtx.moveTo(gateX, y + 7);
-          bgCtx.lineTo(gateX, (y + nextY) / 2);
-          bgCtx.lineTo(nextStart, (y + nextY) / 2);
-          bgCtx.lineTo(nextStart, nextY - 10);
-          bgCtx.stroke();
-        }
-      });
-    }
-
-    // EFFECT 3: DIGITALISIERUNG -> 3D WIREFRAMES & IT SYMBOLS
-    if (activeEffect === 'digital3d') {
-      bgCtx.font = '600 12px monospace';
-      digitalItems.forEach((item) => {
-        const cx = item.x * w;
-        const cy = item.y * h + Math.sin(bgTime * item.speed + item.offset) * 12;
-        const a = bgTime * 0.7 * item.speed + item.offset;
-
-        if (item.type === 0) {
-          // Rotating 3D isometric wireframe cube
-          const size = 22;
-          const pts3D = [
-            [-1, -1, -1], [1, -1, -1], [1, 1, -1], [-1, 1, -1],
-            [-1, -1, 1],  [1, -1, 1],  [1, 1, 1],  [-1, 1, 1]
-          ].map(([x, y, z]) => {
-            const rx = x * Math.cos(a) - z * Math.sin(a);
-            const rz = z * Math.cos(a) + x * Math.sin(a);
-            const ry = y * Math.cos(0.5) - rz * Math.sin(0.5);
-            return [cx + rx * size, cy + ry * size];
-          });
-
-          const edges = [
-            [0,1],[1,2],[2,3],[3,0],
-            [4,5],[5,6],[6,7],[7,4],
-            [0,4],[1,5],[2,6],[3,7]
-          ];
-          bgCtx.strokeStyle = `rgba(${goldRGB}, ${0.38 * effectAlpha})`;
-          bgCtx.lineWidth = 1.1;
-          bgCtx.beginPath();
-          edges.forEach(([u, v]) => {
-            bgCtx.moveTo(pts3D[u][0], pts3D[u][1]);
-            bgCtx.lineTo(pts3D[v][0], pts3D[v][1]);
-          });
-          bgCtx.stroke();
-        } else if (item.type === 1) {
-          // IT / Code Symbol Badge
-          bgCtx.fillStyle = `rgba(${goldRGB}, ${0.42 * effectAlpha})`;
-          bgCtx.fillText(item.sym, cx - 14, cy);
-          bgCtx.strokeStyle = `rgba(${goldRGB}, ${0.22 * effectAlpha})`;
-          bgCtx.strokeRect(cx - 22, cy - 14, 44, 20);
-        } else {
-          // 3D Coordinate Axis Crosshair
-          const len = 20;
-          bgCtx.strokeStyle = `rgba(${goldRGB}, ${0.35 * effectAlpha})`;
-          bgCtx.beginPath();
-          bgCtx.moveTo(cx, cy); bgCtx.lineTo(cx + Math.cos(a) * len, cy + Math.sin(a) * len * 0.5);
-          bgCtx.moveTo(cx, cy); bgCtx.lineTo(cx, cy - len);
-          bgCtx.moveTo(cx, cy); bgCtx.lineTo(cx - Math.sin(a) * len, cy + Math.cos(a) * len * 0.5);
-          bgCtx.stroke();
-          bgCtx.fillStyle = `rgba(${goldRGB}, ${0.5 * effectAlpha})`;
-          bgCtx.beginPath();
-          bgCtx.arc(cx, cy, 2.5, 0, Math.PI * 2);
-          bgCtx.fill();
-        }
-      });
-    }
+    const fxCol = { gold: goldRGB, sec: secRGB };
+    if (activeEffect === 'neural') drawNeural(bgCtx, 0, 0, w, h, effectAlpha, bgTime, { n: 44, link: 210, rs: 1 }, fxCol);
+    if (activeEffect === 'media') drawMedia(bgCtx, 0, 0, w, h, effectAlpha, bgTime, { s: 1 }, fxCol);
+    if (activeEffect === 'scan') drawScan(bgCtx, 0, 0, w, h, effectAlpha, bgTime, { s: 1, cubes: 6 }, fxCol);
 
     bgCtx.restore();
   }
 
+  drawTileFx();
   requestAnimationFrame(renderAmbientBg);
 }
 
-// 3b. Intro: Kamera taucht in ein 3D-Neuronalnetz ein und findet am Ende ein leuchtendes Fenster: die Seite (Einstellung: INTRO_MS)
+// 3b. Intro: neuronales Netz liegt hinter den Kacheln auf dem Seitenhintergrund, ein Signal feuert von der Mitte aus von Neuron zu Neuron und öffnet dabei die Seite (Einstellung: INTRO_MS)
 const INTRO_MS = 1600;
+const EMBED = /[?&]embed=1/.test(location.search);               // Seite läuft als Vorschau in einem Rahmen
 function runIntro() {
   const cv = document.getElementById('introNet');
   if (!cv) return;
+  if (EMBED) { cv.remove(); return; }
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) { cv.remove(); return; }
   const g = cv.getContext('2d');
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
   const W = window.innerWidth, H = window.innerHeight;
   cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
   g.setTransform(dpr, 0, 0, dpr, 0, 0);
-  document.body.classList.add('intro-pre');
+  let bgc = '#1C1C1E';
 
-  const small = W < 640;
-  let seed = 11;
-  const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
-  const ease = v => { v = Math.max(0, Math.min(1, v)); return v * v * (3 - 2 * v); };
   const cl = v => Math.max(0, Math.min(1, v));
-  const F = Math.min(W, H) * 0.95;
+  const ease = v => { v = cl(v); return v * v * (3 - 2 * v); };
+  let seed = 23;
+  const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
 
-  // Schichten entlang z, am Ende das Portal (Seitenformat = Fenster), dessen Rand Teil des Netzes ist
-  const LAYERS = 9, GAP = 150, ZLEN = (LAYERS - 1) * GAP, PZ = -ZLEN - 300;
-  const cy0 = -ZLEN / 2;
-  const nodes = [], layerIdx = [];
-  for (let l = 0; l < LAYERS; l++) {
-    const n = (small ? 9 : 14) + Math.floor(rnd() * 5);
-    const R = 150 + Math.sin(l / (LAYERS - 1) * Math.PI) * 170;
-    layerIdx.push([]);
-    for (let i = 0; i < n; i++) {
-      const a = rnd() * Math.PI * 2, r = Math.sqrt(rnd()) * R;
-      nodes.push({ x: Math.cos(a) * r * 1.25, y: Math.sin(a) * r * 0.8, z: -l * GAP + (rnd() - 0.5) * 50, l, out: [] });
-      layerIdx[l].push(nodes.length - 1);
-    }
+  // Neuronen: verjittertes Gitter über den Rand hinaus, Mitte = (0,0)
+  const cell = W < 640 ? 70 : 96;
+  const cols = Math.ceil(W / cell) + 4, rows = Math.ceil(H / cell) + 4;
+  const nodes = [];
+  for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) {
+    nodes.push({ x: (i - (cols - 1) / 2) * cell + (rnd() - 0.5) * cell * 0.9, y: (j - (rows - 1) / 2) * cell + (rnd() - 0.5) * cell * 0.9, r: 1.6 + rnd() * rnd() * 3.4, ph: rnd() * 6.28, T: Infinity, adj: [] });
   }
-  const hw = W / 2, hh = H / 2;
-  const anchorIdx = [];
-  [[-1, -1], [0, -1], [1, -1], [1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0]].forEach(([ax, ay]) => {
-    nodes.push({ x: ax * hw, y: ay * hh, z: PZ, l: LAYERS, out: [], portal: true });
-    anchorIdx.push(nodes.length - 1);
+  // Synapsen: je Neuron die nächsten Nachbarn, leicht gebogen
+  const seen = new Set(), edges = [];
+  nodes.forEach((n, i) => {
+    nodes.map((m, j) => [j, Math.hypot(n.x - m.x, n.y - m.y)])
+      .filter(([j, d]) => j !== i && d < cell * 1.9)
+      .sort((p, q) => p[1] - q[1]).slice(0, 4).forEach(([j, d]) => {
+        const k = i < j ? i + '_' + j : j + '_' + i;
+        if (seen.has(k)) return; seen.add(k);
+        const m = nodes[j], nx = -(m.y - n.y) / d, ny = (m.x - n.x) / d, b = (rnd() - 0.5) * d * 0.35;
+        const e = { a: i, b: j, d, cx: (n.x + m.x) / 2 + nx * b, cy: (n.y + m.y) / 2 + ny * b };
+        edges.push(e); n.adj.push(e); m.adj.push(e);
+      });
   });
-  const edges = [];
-  const link = (i, j) => { edges.push({ a: i, b: j }); nodes[i].out.push(edges.length - 1); };
-  layerIdx.forEach((ids, l) => {
-    const next = l < LAYERS - 1 ? layerIdx[l + 1] : anchorIdx;
-    ids.forEach(i => {
-      next.map(j => [j, Math.hypot(nodes[i].x - nodes[j].x, nodes[i].y - nodes[j].y)])
-        .sort((p, q) => p[1] - q[1]).slice(0, small ? 2 : 3).forEach(([j]) => link(i, j));
+  // Feuerzeit: Signal läuft von der Mitte entlang der Synapsen (kürzeste Wege)
+  let c0 = 0, best = 1e9;
+  nodes.forEach((n, i) => { const d = Math.hypot(n.x, n.y); if (d < best) { best = d; c0 = i; } });
+  nodes[c0].T = 0;
+  const open = [c0];
+  while (open.length) {
+    open.sort((p, q) => nodes[q].T - nodes[p].T);
+    const i = open.pop();
+    nodes[i].adj.forEach(e => {
+      const j = e.a === i ? e.b : e.a, t = nodes[i].T + e.d * (0.8 + rnd() * 0.5);
+      if (t < nodes[j].T) { nodes[j].T = t; if (!open.includes(j)) open.push(j); }
     });
+  }
+  const TM = Math.max.apply(null, nodes.map(n => n.T));
+  nodes.forEach(n => { n.T = 0.02 + 0.6 * n.T / TM; });
+  edges.forEach(e => {
+    const A = nodes[e.a], B = nodes[e.b];
+    e.from = A.T <= B.T ? A : B; e.to = e.from === A ? B : A;      // Signalrichtung
+    e.t0 = e.from.T; e.t1 = Math.max(e.to.T, e.t0 + 0.02);
   });
-  for (let k = 0; k < anchorIdx.length; k++) link(anchorIdx[k], anchorIdx[(k + 1) % anchorIdx.length]);   // Fensterrahmen
+  const FADE = 0.26, BLOB = cell * 1.75;
 
   const spr = document.createElement('canvas'); spr.width = spr.height = 64;
   const sg = spr.getContext('2d');
-  const grd = sg.createRadialGradient(32, 32, 0, 32, 32, 32);
-  grd.addColorStop(0, 'rgba(255,244,200,1)');
-  grd.addColorStop(0.25, 'rgba(240,200,80,0.75)');
-  grd.addColorStop(1, 'rgba(212,175,55,0)');
-  sg.fillStyle = grd; sg.fillRect(0, 0, 64, 64);
-
-  const pulses = [];
-  const fire = (ei, delay) => pulses.push({ e: ei, p: -(delay || 0), v: 0.9 + rnd() * 0.9 });
-  for (let i = 0; i < (small ? 14 : 28); i++) fire(Math.floor(rnd() * edges.length), rnd() * 0.6);
+  const gr = sg.createRadialGradient(32, 32, 0, 32, 32, 32);
+  gr.addColorStop(0, 'rgba(255,248,215,1)'); gr.addColorStop(0.25, 'rgba(240,200,80,0.7)'); gr.addColorStop(1, 'rgba(212,175,55,0)');
+  sg.fillStyle = gr; sg.fillRect(0, 0, 64, 64);
+  const msk = document.createElement('canvas'); msk.width = msk.height = 128;     // weicher Ausschnitt für die Öffnung
+  const mg = msk.getContext('2d');
+  const mr = mg.createRadialGradient(64, 64, 0, 64, 64, 64);
+  mr.addColorStop(0, 'rgba(0,0,0,1)'); mr.addColorStop(0.55, 'rgba(0,0,0,1)'); mr.addColorStop(1, 'rgba(0,0,0,0)');
+  mg.fillStyle = mr; mg.fillRect(0, 0, 128, 128);
 
   const t0 = performance.now();
-  let last = t0, done = false, first = true;
+  let done = false;
   function finish() {
     if (done) return; done = true;
-    document.body.classList.remove('intro-pre');
     cv.remove();
   }
-  cv.addEventListener('click', finish);
 
   function frame(now) {
     if (done) return;
-    const t = now - t0, dt = Math.min(0.05, (now - last) / 1000); last = now;
-    const u = window.__u !== undefined ? window.__u : t / INTRO_MS;
-    const dv = cl((u - 0.1) / 0.9);
-    const dolly = Math.pow(dv, 1.9);                            // beschleunigt in das Netz hinein
-    const camZ0 = 520, camZ1 = PZ + F * 0.5;                    // Ende: Portal füllt den Bildschirm
-    const camZ = camZ0 + (camZ1 - camZ0) * dolly;
-    const yaw = (1 - ease(u / 0.5)) * 0.65;                     // seitlicher Blick schwenkt gerade
-    const cyaw = Math.cos(yaw), syaw = Math.sin(yaw);
-    const boot = ease(u / 0.2);
+    const u = window.__u !== undefined ? window.__u : (now - t0) / INTRO_MS;
+    const tm = (now - t0) / 1000;
+    bgc = getComputedStyle(document.documentElement).getPropertyValue('--bg-canvas').trim() || bgc;   // folgt Hell/Dunkel-Modus
+    // Zwei Versionen: Tag (dunkles Gold auf hell) und Nacht (helles Gold auf dunkel)
+    const pal = isDark ? { base: '212,175,55', hot: '255,236,170' } : { base: '150,112,40', hot: '110,78,16' };
+    const boot = cl(u / 0.05);
 
     g.globalCompositeOperation = 'source-over';
     g.globalAlpha = 1;
-    const bg = g.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, Math.max(W, H) * 0.75);
-    bg.addColorStop(0, '#15120a'); bg.addColorStop(1, '#050506');
-    g.fillStyle = bg; g.fillRect(0, 0, W, H);
-
-    const P = nodes.map(n => {
-      const dx = n.x, dz = n.z - cy0;
-      const x1 = dx * cyaw - dz * syaw, z1 = dz * cyaw + dx * syaw + cy0;
-      const d = camZ - z1;
-      const s = F / Math.max(d, 1);
-      return { px: W / 2 + x1 * s, py: H / 2 + n.y * s, d, s, vis: d > 40 };
+    g.fillStyle = bgc; g.fillRect(0, 0, W, H);
+    g.translate(W / 2, H / 2);
+    g.globalCompositeOperation = 'destination-out';              // Öffnung um jedes gefeuerte Neuron
+    nodes.forEach(n => {
+      const p = ease((u - n.T) / 0.2);
+      if (p <= 0) return;
+      const R = BLOB * (0.35 + 0.65 * p);
+      g.globalAlpha = p;
+      g.drawImage(msk, n.x - R, n.y - R, R * 2, R * 2);
     });
-    const fog = d => cl(1 - (d - 200) / 1700);
-    const lbOf = n => n.portal ? 1 : cl(boot * 1.6 - Math.abs(n.l - 4) / 6);
+    g.globalAlpha = 1;
+    g.globalCompositeOperation = 'source-over';
 
-    g.globalCompositeOperation = 'lighter';
+    // Synapsen
     g.lineCap = 'round';
     edges.forEach(e => {
-      const A = P[e.a], B = P[e.b];
-      if (!A.vis || !B.vis) return;
-      const na = nodes[e.a], nb = nodes[e.b];
-      const frame_ = na.portal && nb.portal;
-      const al = (frame_ ? 0.85 : 0.38) * Math.min(fog(A.d), fog(B.d)) * Math.min(lbOf(na), lbOf(nb)) * (frame_ ? ease((u - 0.2) / 0.25) : 1);
-      if (al < 0.01) return;
-      g.strokeStyle = 'rgba(' + (frame_ ? '255,226,140' : '212,175,55') + ',' + al + ')';
-      g.lineWidth = Math.max(0.5, (frame_ ? 2.2 : 1.1) * (A.s + B.s) * 0.75);
-      g.beginPath(); g.moveTo(A.px, A.py); g.lineTo(B.px, B.py); g.stroke();
-    });
-
-    nodes.forEach((n, i) => {
-      const q = P[i];
-      if (!q.vis) return;
-      const al = fog(q.d) * lbOf(n);
-      if (al < 0.02) return;
-      const sz = Math.min(120, 16 * q.s * 2.2 + 3) * (n.portal ? 1.5 : 1);
-      g.globalAlpha = Math.min(1, al * 1.3);
-      g.drawImage(spr, q.px - sz / 2, q.py - sz / 2, sz, sz);
-    });
-
-    for (let i = pulses.length - 1; i >= 0; i--) {
-      const pl = pulses[i];
-      pl.p += dt * pl.v * 2.2;
-      if (pl.p < 0) continue;
-      if (pl.p >= 1) {
-        const nx = nodes[edges[pl.e].b].out;
-        pulses.splice(i, 1);
-        if (nx.length && pulses.length < (small ? 40 : 90)) nx.forEach(k => { if (rnd() < 0.7) fire(k, 0); });
-        else if (pulses.length < (small ? 14 : 28)) fire(Math.floor(rnd() * edges.length), 0);
-        continue;
+      const A = nodes[e.a], B = nodes[e.b];
+      const life = 1 - ease((u - Math.max(A.T, B.T)) / FADE);
+      if (life <= 0.01) return;
+      const act = cl(1 - Math.abs(u - (e.t0 + e.t1) / 2) / 0.06);         // aufleuchten, wenn das Signal darüber läuft
+      g.strokeStyle = 'rgba(' + (act > 0.05 ? pal.hot : pal.base) + ',' + (0.14 + 0.2 * (1 - Math.abs(A.ph - B.ph) / 6.28) + 0.6 * act) * boot * life + ')';
+      g.lineWidth = 0.8 + act * 1.2;
+      g.beginPath(); g.moveTo(A.x, A.y); g.quadraticCurveTo(e.cx, e.cy, B.x, B.y); g.stroke();
+      // Signalpuls entlang der Synapse
+      const f = (u - e.t0) / (e.t1 - e.t0);
+      if (f > 0 && f < 1) {
+        const F = e.from, T = e.to, q = 1 - f;
+        const x = q * q * F.x + 2 * q * f * e.cx + f * f * T.x, y = q * q * F.y + 2 * q * f * e.cy + f * f * T.y;
+        g.globalCompositeOperation = isDark ? 'lighter' : 'source-over';
+        g.drawImage(spr, x - 9, y - 9, 18, 18);
+        g.globalCompositeOperation = 'source-over';
       }
-      const A = P[edges[pl.e].a], B = P[edges[pl.e].b];
-      if (!A.vis || !B.vis) continue;
-      const x = A.px + (B.px - A.px) * pl.p, y = A.py + (B.py - A.py) * pl.p;
-      const d = A.d + (B.d - A.d) * pl.p;
-      const sz = Math.min(90, 40 * (F / Math.max(d, 1)) * 0.5 + 6);
-      g.globalAlpha = Math.min(1, fog(d) * 1.4);
-      g.drawImage(spr, x - sz / 2, y - sz / 2, sz, sz);
-    }
-    g.globalAlpha = 1;
-
-    // Portal: Fenster zur Seite, wird im Anflug heller (Seite scheint durch)
-    const ca = ease((u - 0.25) / 0.45);
-    const corner = [[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([ax, ay]) => {
-      const dz = PZ - cy0, dx = ax * hw;
-      const x1 = dx * cyaw - dz * syaw, z1 = dz * cyaw + dx * syaw + cy0;
-      const s = F / Math.max(camZ - z1, 1);
-      return [W / 2 + x1 * s, H / 2 + ay * hh * s];
     });
-    if (ca > 0.01 && camZ - PZ > 40) {
-      g.globalCompositeOperation = 'destination-out';
-      g.fillStyle = 'rgba(0,0,0,' + (ca * 0.97) + ')';
-      g.beginPath(); corner.forEach((c, k) => (k ? g.lineTo(c[0], c[1]) : g.moveTo(c[0], c[1]))); g.closePath(); g.fill();
-    } else if (camZ - PZ <= 40) {
-      g.globalCompositeOperation = 'destination-out';
-      g.fillStyle = '#000'; g.fillRect(0, 0, W, H);
-    }
+    // Neuronen
+    nodes.forEach(n => {
+      const life = 1 - ease((u - n.T) / FADE);
+      if (life <= 0.01) return;
+      const fire = cl(1 - Math.abs(u - n.T) / 0.07);
+      const tw = 0.7 + 0.3 * Math.sin(tm * 3 + n.ph);
+      const sz = (n.r * 3.2 + fire * 16) * life + 3;
+      g.globalAlpha = Math.min(1, (0.55 * tw + 0.6 * fire) * boot * life);
+      g.drawImage(spr, n.x - sz, n.y - sz, sz * 2, sz * 2);
+      g.globalAlpha = Math.min(1, 0.9 * boot * life);
+      g.fillStyle = 'rgba(' + (fire > 0.1 ? pal.hot : pal.base) + ',1)';
+      g.beginPath(); g.arc(n.x, n.y, n.r * life + 0.6, 0, 6.283); g.fill();
+    });
+    g.globalAlpha = 1;
+    g.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    // Lichtblitz beim Eintauchen
-    const flash = cl(1 - Math.abs(u - 0.86) / 0.12) * 0.35;
-    if (flash > 0) {
-      g.globalCompositeOperation = 'lighter';
-      const fg = g.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, Math.max(W, H) * 0.6);
-      fg.addColorStop(0, 'rgba(255,236,170,' + flash + ')'); fg.addColorStop(1, 'rgba(255,236,170,0)');
-      g.fillStyle = fg; g.fillRect(0, 0, W, H);
-    }
-
-    if (first) { first = false; cv.style.background = 'none'; }
-    if (u > 0.3 && document.body.classList.contains('intro-pre')) document.body.classList.remove('intro-pre');
     if (u < 1 || window.__u !== undefined) requestAnimationFrame(frame); else finish();
   }
   requestAnimationFrame(frame);
@@ -616,7 +554,7 @@ function toggleMobileMenu() {
 const SCOPE_ON = 'scope-btn scope-on';
 const SCOPE_OFF = 'scope-btn';
 
-// 6. Subpage 02: Projektleitung (Rohbau inkl. Großguss, Gesamtfahrzeug inkl. DMU & Schnittstellen, Drohnen inkl. C-UAS)
+// 6. Subpage 02: Projektleitung (Rohbau inkl. Großguss, Gesamtfahrzeug inkl. DMU & Schnittstellen)
 const amgData = {
   rohbau: {
     tag: 'SCHWERPUNKT // KAROSSERIEROHBAU',
@@ -637,21 +575,11 @@ const amgData = {
     img: 'img/gesamtfahrzeug_v1.jpg?v=1',
     cap: 'Gesamtfahrzeug-Entwicklung',
     sub: 'KI-generierte Illustration'
-  },
-  uav: {
-    tag: 'SCHWERPUNKT // DROHNEN & C-UAS',
-    heading: 'UAV-Projekte & C-UAS (Counter-UAS)',
-    copy: 'Projektsteuerung und Produktmanagement für kommerzielle Drohnen-Befliegungen sowie C-UAS-Systeme (Counter-UAS / Drohnenabwehr und Luftraumsicherheit) – von der technischen Konzeption über die Systemintegration bis zur operativen Durchführung.',
-    s1: 'UAV & C-UAS Erfahrung',
-    s2: '7+ Jahre Flugpraxis',
-    img: 'img/cuas.jpg',
-    cap: 'C-UAS · Drohnenabwehr',
-    sub: 'KI-generierte Illustration'
   }
 };
 
 function setAmgScope(key) {
-  ['rohbau', 'overall', 'uav'].forEach(k => {
+  ['rohbau', 'overall'].forEach(k => {
     const btn = document.getElementById('amg-btn-' + k);
     if (btn) {
       btn.className = (k === key)
@@ -1148,9 +1076,69 @@ window.addEventListener('DOMContentLoaded', () => {
   initTheme();
   runIntro();
   initCardFocus();
+  initMediaVideos();
   setAmgScope('rohbau');
   resizeBgCanvas();
   showView(viewFromHash());
   ScanFlow.start();
   requestAnimationFrame(renderAmbientBg);
 });
+
+// 8. Digitale Medien: Videos laufen nur sichtbar; Website-Vorschau (diese Seite) lädt erst bei Bedarf, folgt Tag/Nacht und blättert durch die Ansichten
+const TOUR_VIEWS = ['home', 'consulting', 'projektleitung', 'founder'];
+function previewFrame() { return document.querySelector('.site-preview iframe'); }
+function syncPreviewTheme() {
+  const fr = previewFrame();
+  if (fr && fr.contentWindow) fr.contentWindow.postMessage({ type: 'dw-theme', dark: isDark }, '*');
+}
+function initMediaVideos() {
+  const vids = document.querySelectorAll('.media-vid video');
+  if ('IntersectionObserver' in window) {
+    const io = new IntersectionObserver(entries => entries.forEach(en => (en.isIntersecting ? en.target.play().catch(() => {}) : en.target.pause())), { threshold: 0.25 });
+    vids.forEach(v => io.observe(v));
+  }
+
+  const box = document.querySelector('.site-preview');
+  const fr = box && box.querySelector('iframe');
+  if (!fr || EMBED) { if (box) box.remove(); return; }       // in der Vorschau selbst keine Vorschau (sonst Endlosschleife)
+  const fit = () => {
+    const sc = box.clientWidth / 1280;
+    fr.style.height = Math.ceil(box.clientHeight / sc) + 'px';
+    fr.style.transform = 'scale(' + sc + ')';
+  };
+  new ResizeObserver(fit).observe(box);
+  let tour = null, idx = 0;
+  const stop = () => { clearInterval(tour); tour = null; };
+  const start = () => {
+    if (tour) return;
+    const step = () => { if (fr.contentWindow) fr.contentWindow.postMessage({ type: 'dw-view', view: TOUR_VIEWS[idx++ % TOUR_VIEWS.length] }, '*'); };
+    step(); tour = setInterval(step, 5200);
+  };
+  fr.addEventListener('load', () => { syncPreviewTheme(); start(); });
+  new IntersectionObserver(en => {
+    const on = en.some(x => x.isIntersecting);
+    if (on && !fr.src) { fr.src = fr.dataset.src + '&theme=' + (isDark ? 'dark' : 'light'); fit(); }
+    else if (on) start(); else stop();
+  }, { threshold: 0.1 }).observe(box);
+}
+
+// Als Vorschau eingebettet: Tag/Nacht und Ansicht kommen von der Elternseite, Ansicht wird langsam durchgescrollt
+if (EMBED) {
+  window.addEventListener('message', e => {
+    const d = e.data || {};
+    if (d.type === 'dw-theme') { isDark = !!d.dark; applyTheme(); }
+    if (d.type === 'dw-view' && d.view in ROUTES) {
+      showView(d.view);
+      setTimeout(() => {
+        const max = document.documentElement.scrollHeight - window.innerHeight;
+        if (max <= 0) return;
+        const from = 0, to = Math.min(max, 700), t0 = performance.now(), dur = 3600;
+        (function go(now) {
+          const k = Math.min(1, (now - t0) / dur), v = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+          window.scrollTo(0, from + (to - from) * v);
+          if (k < 1) requestAnimationFrame(go);
+        })(t0);
+      }, 700);
+    }
+  });
+}

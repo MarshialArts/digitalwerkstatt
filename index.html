@@ -13,7 +13,7 @@
   <link rel="stylesheet" href="css/tailwind.css" />
 
   <!-- Eigenes Stylesheet -->
-  <link rel="stylesheet" href="css/styles.css" />
+  <link rel="stylesheet" href="css/styles.css?v=7" />
 </head>
 <body class="min-h-screen flex flex-col selection:bg-[#D4AF37] selection:text-[#111113]">
 
@@ -145,6 +145,7 @@
                onmouseenter="activateCardBgEffect('neural', this)"
                onmouseleave="deactivateCardBgEffect()"
                class="ios-card pillar-card p-7 flex flex-col justify-between cursor-pointer group">
+            <canvas class="tile-fx" data-fx="neural" aria-hidden="true"></canvas>
             <div>
               <div class="flex items-center justify-between mb-6">
                 <span class="font-mono text-xs font-semibold text-gold">01 // KI-BERATUNG</span>
@@ -176,9 +177,10 @@
 
           <!-- KACHEL 02: DIGITALE MEDIEN -->
           <div onclick="navigateTo('medien')"
-               onmouseenter="activateCardBgEffect('digital3d', this)"
+               onmouseenter="activateCardBgEffect('media', this)"
                onmouseleave="deactivateCardBgEffect()"
                class="ios-card pillar-card p-7 flex flex-col justify-between cursor-pointer group">
+            <canvas class="tile-fx" data-fx="media" aria-hidden="true"></canvas>
             <div>
               <div class="flex items-center justify-between mb-6">
                 <span class="font-mono text-xs font-semibold text-gold">02 // DIGITALE MEDIEN</span>
@@ -206,9 +208,10 @@
 
           <!-- KACHEL 03: DIGITALISIERUNG UND PROJEKTLEITUNG -->
           <div onclick="navigateTo('projektleitung')"
-               onmouseenter="activateCardBgEffect('milestones', this)"
+               onmouseenter="activateCardBgEffect('scan', this)"
                onmouseleave="deactivateCardBgEffect()"
                class="ios-card pillar-card p-7 flex flex-col justify-between cursor-pointer group">
+            <canvas class="tile-fx" data-fx="scan" aria-hidden="true"></canvas>
             <div>
               <div class="flex items-center justify-between mb-6">
                 <span class="font-mono text-xs font-semibold text-gold">03 // DIGITALISIERUNG &amp; PROJEKT</span>
@@ -578,50 +581,25 @@
 
         <div class="grid md:grid-cols-3 gap-6 mb-10">
           <div class="ios-card p-6 space-y-2">
-            <div class="media-art ios-solid rounded-2xl mb-4"><svg viewBox="0 0 240 140" class="w-full h-36" role="img" aria-label="Smartphone mit Video, Herzen steigen auf">
-              <rect x="88" y="10" width="64" height="120" rx="12" class="art-frame"/>
-              <rect x="96" y="22" width="48" height="84" rx="5" class="art-screen"/>
-              <path d="M114 54l16 10-16 10z" class="art-play"/>
-              <rect x="100" y="112" width="40" height="4" rx="2" class="art-bar"/>
-              <path d="M62 96c-6-5-10-9-10-13a5 5 0 0110-1 5 5 0 0110 1c0 4-4 8-10 13z" class="art-heart art-float a1"/>
-              <path d="M184 90c-5-4-8-7-8-10a4 4 0 018-1 4 4 0 018 1c0 3-3 6-8 10z" class="art-heart art-float a2"/>
-              <rect x="170" y="40" width="42" height="16" rx="8" class="art-bubble art-float a3"/>
-              <rect x="28" y="52" width="38" height="14" rx="7" class="art-bubble art-float a2"/>
-            </svg></div>
+            <div class="media-vid relative rounded-2xl overflow-hidden mb-4 bg-[#111113] aspect-[3/4]">
+              <video class="w-full h-full object-cover" src="vid/ugc.mp4" poster="vid/ugc-poster.jpg" muted loop playsinline preload="metadata" aria-label="Beispiel für UGC-Content"></video>
+            </div>
             <span class="font-mono text-xs text-gold font-semibold">01 // UGC-CONTENT</span>
             <h3 class="text-lg font-bold">Content im Creator-Stil</h3>
             <p class="text-sm text-sec">Authentische Kurzvideos und Posts für Social Media, produziert für dein Produkt oder deine Marke.</p>
           </div>
           <div class="ios-card p-6 space-y-2">
-            <div class="media-art ios-solid rounded-2xl mb-4"><svg viewBox="0 0 240 140" class="w-full h-36" role="img" aria-label="Kamera-Sucher mit Aufnahme und Schnitt-Zeitleiste">
-              <path d="M30 40V20h20M210 40V20h-20M30 84v20h20M210 84v20h-20" class="art-bracket"/>
-              <rect x="96" y="44" width="48" height="36" rx="4" class="art-focus"/>
-              <circle cx="120" cy="62" r="3" class="art-dot-static"/>
-              <circle cx="38" cy="30" r="4" class="art-rec"/>
-              <text x="48" y="34" class="art-label">REC</text>
-              <rect x="30" y="112" width="180" height="14" rx="4" class="art-track"/>
-              <rect x="34" y="115" width="48" height="8" rx="2" class="art-clip"/>
-              <rect x="86" y="115" width="62" height="8" rx="2" class="art-clip c2"/>
-              <rect x="152" y="115" width="54" height="8" rx="2" class="art-clip"/>
-              <rect x="34" y="108" width="2" height="22" class="art-playhead"/>
-            </svg></div>
+            <div class="media-vid relative rounded-2xl overflow-hidden mb-4 bg-[#111113] aspect-[3/4]">
+              <video class="w-full h-full object-cover" src="vid/medien-platzhalter.mp4" poster="vid/medien-platzhalter-poster.jpg" muted loop playsinline preload="metadata" aria-label="Beispiel für Foto- und Videoproduktion (Platzhalter)"></video>
+            </div>
             <span class="font-mono text-xs text-gold font-semibold">02 // FOTO &amp; VIDEO</span>
             <h3 class="text-lg font-bold">Medienproduktion</h3>
             <p class="text-sm text-sec">Hochwertige Foto- und Filmaufnahmen am Boden und aus der Luft, Schnitt und Grading. Professioneller Look mit Einsatz visionärer KI möglich.</p>
           </div>
           <div class="ios-card p-6 space-y-2">
-            <div class="media-art ios-solid rounded-2xl mb-4"><svg viewBox="0 0 240 140" class="w-full h-36" role="img" aria-label="Browserfenster mit Website-Layout">
-              <rect x="30" y="14" width="180" height="112" rx="10" class="art-frame"/>
-              <circle cx="44" cy="26" r="3" class="art-dot-static"/><circle cx="55" cy="26" r="3" class="art-dot-static"/><circle cx="66" cy="26" r="3" class="art-dot-static"/>
-              <line x1="30" y1="38" x2="210" y2="38" class="art-line"/>
-              <rect x="44" y="50" width="70" height="8" rx="3" class="art-bar art-grow"/>
-              <rect x="44" y="64" width="52" height="5" rx="2" class="art-line-fill"/>
-              <rect x="44" y="74" width="60" height="5" rx="2" class="art-line-fill"/>
-              <rect x="44" y="90" width="30" height="12" rx="6" class="art-play"/>
-              <rect x="128" y="50" width="68" height="62" rx="6" class="art-screen"/>
-              <path d="M138 100l16-22 12 14 10-10 14 18z" class="art-hill"/>
-              <path d="M178 82l0 18 5-5 5 10 3-2-5-10 7-1z" class="art-cursor art-cursor-move"/>
-            </svg></div>
+            <div class="media-vid site-preview relative rounded-2xl overflow-hidden mb-4 bg-[#111113] aspect-[3/4]" aria-label="Vorschau dieser Website">
+              <iframe data-src="index.html?embed=1" title="Vorschau dieser Website" tabindex="-1" loading="lazy" aria-hidden="true"></iframe>
+            </div>
             <span class="font-mono text-xs text-gold font-semibold">03 // WEBAUFTRITT</span>
             <h3 class="text-lg font-bold">Website-Design</h3>
             <p class="text-sm text-sec">Schnelle, ästhetische Webseiten, die Film, Foto und 3D-Inhalte nahtlos präsentieren.</p>
@@ -834,6 +812,6 @@
   </footer>
 
   <!-- Ausgelagerte Anwendungslogik -->
-  <script src="js/app.js"></script>
+  <script src="js/app.js?v=8"></script>
 </body>
 </html>
