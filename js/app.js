@@ -1,5 +1,5 @@
 // ============================================================================
-// digitalwerkstatt — Main Application Logic (js/app.js)
+// Digitalisierung Hübner — Main Application Logic (js/app.js)
 // ============================================================================
 
 // 1. Auto Day/Night Theme (Day: Bright Milky iOS, Night: Thick Graphite Gray)
@@ -27,7 +27,7 @@ function toggleTheme() {
   if (typeof syncPreviewTheme === 'function') syncPreviewTheme();
 }
 
-// 2. SLOWER Mini Drones Flying Out of the 'dw' Circle on Top-Left Hover
+// 2. SLOWER Mini Drones Flying Out of the 'DH' Circle on Top-Left Hover
 let lastSwarmTime = 0;
 
 function spawnLogoDrones(e) {
@@ -95,26 +95,11 @@ let effectAlpha = 0;
 let isHoveringCard = false;
 let bgTime = 0;
 
-// Pre-generate nodes for smooth animations
-const neuralNodes = Array.from({ length: 44 }, () => ({
-  bx: 0.06 + Math.random() * 0.88,
-  by: 0.08 + Math.random() * 0.84,
-  ax: 0.01 + Math.random() * 0.03, ay: 0.01 + Math.random() * 0.03,
-  fx: 0.15 + Math.random() * 0.25, fy: 0.15 + Math.random() * 0.25,
-  ph: Math.random() * Math.PI * 2,
-  r: 2 + Math.random() * 2.5
-}));
-
-// Kleine feste Zufallsfolge (stabile Punktwolke für den Scan-Effekt)
-const scanPts = Array.from({ length: 110 }, (_, i) => {
-  const h = k => { const v = Math.sin((i + 1) * k) * 43758.5453; return v - Math.floor(v); };
-  return { x: h(12.9898), y: h(78.233), z: h(37.719) };
-});
-
 function resizeBgCanvas() {
   if (!bgCanvas) return;
-  bgCanvas.width = window.innerWidth;
-  bgCanvas.height = window.innerHeight;
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  bgCanvas.width = Math.round(window.innerWidth * dpr);
+  bgCanvas.height = Math.round(window.innerHeight * dpr);
 }
 window.addEventListener('resize', resizeBgCanvas);
 
@@ -136,146 +121,239 @@ function deactivateCardBgEffect() {
   isHoveringCard = false;
 }
 
-// Effekt-Zeichner: gleiche Optik als Seitenhintergrund (ganze Fläche) und als leiser Hintergrund in der Kachel
+// Effekt-Zeichner für den Seitenhintergrund (erscheint beim Überfahren einer Kachel)
+// Gemeinsame Helfer: weicher Glow-Sprite (einmal je Farbe gerendert) und deterministischer Zufall
+const glowSprites = {};
+function glowSprite(rgb) {
+  if (glowSprites[rgb]) return glowSprites[rgb];
+  const s = document.createElement('canvas'); s.width = s.height = 64;
+  const g = s.getContext('2d'), gr = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+  gr.addColorStop(0, `rgba(${rgb}, 1)`); gr.addColorStop(0.25, `rgba(${rgb}, 0.35)`); gr.addColorStop(1, `rgba(${rgb}, 0)`);
+  g.fillStyle = gr; g.fillRect(0, 0, 64, 64);
+  return (glowSprites[rgb] = s);
+}
+function glowAt(c, rgb, x, y, r, a) {
+  if (a <= 0.01) return;
+  c.globalAlpha = Math.min(1, a); c.drawImage(glowSprite(rgb), x - r, y - r, r * 2, r * 2); c.globalAlpha = 1;
+}
+function seeded(seed) { let s = seed; return () => { s = (s * 16807) % 2147483647; return s / 2147483647; }; }
+const clamp01 = v => Math.max(0, Math.min(1, v));
+const smooth = v => { v = clamp01(v); return v * v * (3 - 2 * v); };
+
+// --- 1. Neuronales Netz: Tiefenebenen mit Parallaxe, gebogene Synapsen, Signale mit Leuchtspur, Neuronen zünden beim Eintreffen
+const NET = (() => {
+  const r = seeded(7), nodes = [], edges = [];
+  for (let i = 0; i < 62; i++) nodes.push({ x: 0.04 + r() * 0.92, y: 0.06 + r() * 0.88, z: r(), ph: r() * 6.28, fq: 0.12 + r() * 0.2, ax: 0.008 + r() * 0.018 });
+  nodes.forEach((a, i) => {
+    nodes.map((b, j) => ({ j, d: Math.hypot((a.x - b.x) * 1.7, a.y - b.y) + Math.abs(a.z - b.z) * 0.25 }))
+      .filter(o => o.j !== i).sort((p, q) => p.d - q.d).slice(0, 3).forEach(o => {
+        if (!edges.some(e => (e.a === i && e.b === o.j) || (e.a === o.j && e.b === i)))
+          edges.push({ a: i, b: o.j, bend: (r() - 0.5) * 0.35, sp: 0.16 + r() * 0.22, ph: r(), on: r() < 0.55 });
+      });
+  });
+  return { nodes, edges, act: new Float32Array(nodes.length) };
+})();
+
 function drawNeural(c, ax, ay, aw, ah, A, t, o, col) {
-  const P = [];
-  for (let i = 0; i < o.n; i++) {
-    const n = neuralNodes[i];
-    P.push([ax + (n.bx + Math.sin(t * n.fx + n.ph) * n.ax) * aw, ay + (n.by + Math.sin(t * n.fy + n.ph * 1.7) * n.ay) * ah]);
-  }
-  for (let i = 0; i < o.n; i++) {
-    for (let j = i + 1; j < o.n; j++) {
-      const d = Math.hypot(P[i][0] - P[j][0], P[i][1] - P[j][1]);
-      if (d >= o.link) continue;
-      c.strokeStyle = `rgba(${col.gold}, ${(1 - d / o.link) * 0.26 * A})`;
-      c.lineWidth = 1.1;
-      c.beginPath(); c.moveTo(P[i][0], P[i][1]); c.lineTo(P[j][0], P[j][1]); c.stroke();
-      if ((i + j) % 5 === 0) {                                   // Synapsen-Puls
-        const k = (t * 0.45 + i * 0.17) % 1;
-        c.fillStyle = `rgba(${col.gold}, ${0.65 * A})`;
-        c.beginPath(); c.arc(P[i][0] + (P[j][0] - P[i][0]) * k, P[i][1] + (P[j][1] - P[i][1]) * k, 2.2 * o.rs, 0, Math.PI * 2); c.fill();
-      }
+  A *= 0.8;                                           // 20 % transparenter
+  const G = col.gold, N = NET.nodes, act = NET.act;
+  act.fill(0);
+  const P = N.map(n => [ax + (n.x + Math.sin(t * n.fq + n.ph) * n.ax * (0.4 + n.z)) * aw, ay + (n.y + Math.cos(t * n.fq * 0.8 + n.ph * 1.7) * n.ax * (0.4 + n.z)) * ah]);
+  const ctl = (e) => {
+    const p = P[e.a], q = P[e.b], mx = (p[0] + q[0]) / 2, my = (p[1] + q[1]) / 2;
+    return [mx - (q[1] - p[1]) * e.bend, my + (q[0] - p[0]) * e.bend];
+  };
+  const bz = (p, k, q, u) => { const m = 1 - u; return [m * m * p[0] + 2 * m * u * k[0] + u * u * q[0], m * m * p[1] + 2 * m * u * k[1] + u * u * q[1]]; };
+  c.lineCap = 'round';
+  // Synapsen (hintere Ebenen zuerst, schwächer)
+  NET.edges.forEach(e => {
+    const z = (N[e.a].z + N[e.b].z) / 2, k = ctl(e);
+    c.strokeStyle = `rgba(${G}, ${(0.07 + z * 0.17) * A})`; c.lineWidth = 0.6 + z * 0.9;
+    c.beginPath(); c.moveTo(P[e.a][0], P[e.a][1]); c.quadraticCurveTo(k[0], k[1], P[e.b][0], P[e.b][1]); c.stroke();
+  });
+  // Signale mit Leuchtspur
+  c.globalCompositeOperation = 'lighter';
+  NET.edges.forEach(e => {
+    if (!e.on) return;
+    const u = (t * e.sp + e.ph) % 1, p = P[e.a], q = P[e.b], k = ctl(e), z = (N[e.a].z + N[e.b].z) / 2;
+    if (u > 0.9) act[e.b] += (u - 0.9) * 10; if (u < 0.08) act[e.a] += (0.08 - u) * 12 * 0.6;
+    const seg = 7, tail = 0.16;
+    for (let s = 0; s < seg; s++) {
+      const u0 = Math.max(0, u - tail * (1 - s / seg)), u1 = Math.max(0, u - tail * (1 - (s + 1) / seg));
+      const a = bz(p, k, q, u0), b = bz(p, k, q, u1);
+      c.strokeStyle = `rgba(${G}, ${((s + 1) / seg) * 0.7 * (0.5 + z * 0.5) * A})`; c.lineWidth = (0.8 + z * 1.4) * ((s + 1) / seg);
+      c.beginPath(); c.moveTo(a[0], a[1]); c.lineTo(b[0], b[1]); c.stroke();
     }
-    c.fillStyle = `rgba(${col.gold}, ${0.45 * A})`;
-    c.beginPath(); c.arc(P[i][0], P[i][1], neuralNodes[i].r * o.rs, 0, Math.PI * 2); c.fill();
-  }
+    const h = bz(p, k, q, u);
+    glowAt(c, G, h[0], h[1], 9 + z * 8, 0.8 * A);
+  });
+  // Neuronen mit Halo, leuchten beim Zünden auf
+  N.forEach((n, i) => {
+    const f = Math.min(1, act[i]), r = 1.8 + n.z * 3.4 + f * 1.6;
+    glowAt(c, G, P[i][0], P[i][1], r * (4 + f * 5), (0.18 + n.z * 0.2 + f * 0.7) * A);
+    c.fillStyle = `rgba(${G}, ${(0.5 + n.z * 0.3 + f * 0.2) * A})`;
+    c.beginPath(); c.arc(P[i][0], P[i][1], r, 0, Math.PI * 2); c.fill();
+  });
+  c.globalCompositeOperation = 'source-over';
 }
 
+// --- 2. Digitale Medien: Autofokus-Rahmen, Tonspur, Filmstreifen mit Motiven, Timeline mit Timecode
 function drawMedia(c, ax, ay, aw, ah, A, t, o, col) {
-  const s = o.s, G = col.gold;
-  c.lineWidth = 1.1;
-  // Ein Filmstreifen läuft unten durch das Bild
-  [[0.73, -1]].forEach(([fy, dir]) => {
-    const y = ay + ah * fy, sh = 46 * s, fw = 62 * s, gap = 10 * s, step = fw + gap;
-    const off = ((t * 28 * s * dir) % step + step) % step;
-    c.strokeStyle = `rgba(${G}, ${0.22 * A})`;
-    c.beginPath(); c.moveTo(ax, y - sh / 2 - 5 * s); c.lineTo(ax + aw, y - sh / 2 - 5 * s); c.moveTo(ax, y + sh / 2 + 5 * s); c.lineTo(ax + aw, y + sh / 2 + 5 * s); c.stroke();
-    for (let x = ax - step + off; x < ax + aw; x += step) {
-      c.fillStyle = `rgba(${G}, ${0.07 * A})`;
-      c.strokeStyle = `rgba(${G}, ${0.4 * A})`;
-      c.fillRect(x, y - sh / 2, fw, sh); c.strokeRect(x, y - sh / 2, fw, sh);
-      c.fillStyle = `rgba(${G}, ${0.3 * A})`;
-      c.fillRect(x + 6 * s, y - sh / 2 - 4 * s, 5 * s, 3 * s); c.fillRect(x + fw - 11 * s, y - sh / 2 - 4 * s, 5 * s, 3 * s);
-    }
-  });
-  // Play-Symbol in der Mitte, pulsiert
-  const pc = [ax + aw / 2, ay + ah / 2], pr = (24 + Math.sin(t * 2) * 2.5) * s;
-  c.strokeStyle = `rgba(${G}, ${0.5 * A})`; c.lineWidth = 1.6;
-  c.beginPath(); c.arc(pc[0], pc[1], pr, 0, Math.PI * 2); c.stroke();
-  c.fillStyle = `rgba(${G}, ${0.55 * A})`;
-  c.beginPath(); c.moveTo(pc[0] - pr * 0.28, pc[1] - pr * 0.42); c.lineTo(pc[0] + pr * 0.5, pc[1]); c.lineTo(pc[0] - pr * 0.28, pc[1] + pr * 0.42); c.closePath(); c.fill();
-  // Sucher-Ecken und REC
-  const m = Math.min(aw, ah) * 0.06 + 8, L = 26 * s, top = ay + ah * 0.17;      // obere Sucherecken und REC weiter unten
-  c.strokeStyle = `rgba(${G}, ${0.5 * A})`; c.lineWidth = 1.6;
+  const G = col.gold, S = col.sec, s = Math.max(0.8, Math.min(1.3, Math.min(aw, ah) / 800));
+  const cx = ax + aw / 2, cy = ay + ah * 0.46;
+  c.lineCap = 'round'; c.lineJoin = 'round';
+
+  // Autofokus-Rahmen: wandert, rastet ein (Rahmen zieht sich zusammen)
+  const ph = (t * 0.22) % 1, lock = smooth((ph - 0.55) / 0.2) * (1 - smooth((ph - 0.9) / 0.1));
+  const seg = Math.floor(t * 0.22), fr = seeded(seg * 97 + 13), fr2 = seeded((seg + 1) * 97 + 13);
+  const px = fr(), py = fr(), nx = fr2(), ny = fr2(), mv = smooth(ph / 0.5);
+  const fx = ax + aw * (0.18 + 0.64 * (px + (nx - px) * mv)), fy = ay + ah * (0.2 + 0.5 * (py + (ny - py) * mv));
+  const fh = (34 - lock * 12) * s, fl = 11 * s;
+  c.strokeStyle = lock > 0.5 ? `rgba(${G}, ${0.95 * A})` : `rgba(${S}, ${0.5 * A})`; c.lineWidth = 1.7;
   c.beginPath();
+  [[-1, -1], [1, -1], [1, 1], [-1, 1]].forEach(([sx, sy]) => { c.moveTo(fx + sx * fh, fy + sy * (fh - fl)); c.lineTo(fx + sx * fh, fy + sy * fh); c.lineTo(fx + sx * (fh - fl), fy + sy * fh); });
+  c.stroke();
+  if (lock > 0.5) glowAt(c, G, fx, fy, fh * 1.8, 0.35 * A * lock);
+
+  // Sucher-Ecken, REC, Timecode
+  const m = Math.min(aw, ah) * 0.06 + 8, L = 26 * s, top = ay + ah * 0.17;
+  c.strokeStyle = `rgba(${G}, ${0.5 * A})`; c.lineWidth = 1.6; c.beginPath();
   c.moveTo(ax + m, top + L); c.lineTo(ax + m, top); c.lineTo(ax + m + L, top);
   c.moveTo(ax + aw - m - L, top); c.lineTo(ax + aw - m, top); c.lineTo(ax + aw - m, top + L);
   c.moveTo(ax + m, ay + ah - m - L); c.lineTo(ax + m, ay + ah - m); c.lineTo(ax + m + L, ay + ah - m);
   c.moveTo(ax + aw - m - L, ay + ah - m); c.lineTo(ax + aw - m, ay + ah - m); c.lineTo(ax + aw - m, ay + ah - m - L);
   c.stroke();
-  if (Math.sin(t * 4) > -0.2) { c.fillStyle = `rgba(220, 70, 60, ${0.75 * A})`; c.beginPath(); c.arc(ax + m + 8 * s, top + 14 * s + L, 3.5 * s, 0, Math.PI * 2); c.fill(); }
-  c.fillStyle = `rgba(${col.sec}, ${0.45 * A})`; c.font = `600 ${Math.round(10 * s + 1)}px monospace`;
-  c.fillText('REC', ax + m + 16 * s, top + 18 * s + L);
-  // Zeitleiste mit Clips und Abspielkopf
-  const ty = ay + ah - m - 14 * s - L * 0.2 - 8, tx0 = ax + m + L + 6, tx1 = ax + aw - m - L - 6;
+  if (Math.sin(t * 4) > -0.2) { glowAt(c, '220, 70, 60', ax + m + 8 * s, top + 14 * s + L, 10 * s, 0.7 * A); c.fillStyle = `rgba(230, 75, 65, ${0.9 * A})`; c.beginPath(); c.arc(ax + m + 8 * s, top + 14 * s + L, 3.6 * s, 0, Math.PI * 2); c.fill(); }
+  const fps = 25, fN = Math.floor(t * fps), pad = v => String(v).padStart(2, '0');
+  c.fillStyle = `rgba(${S}, ${0.5 * A})`; c.font = `600 ${Math.round(10 * s + 2)}px ui-monospace, monospace`; c.textBaseline = 'alphabetic';
+  c.fillText(`REC  00:${pad(Math.floor(fN / fps) % 60)}:${pad(fN % fps)}`, ax + m + 18 * s, top + 18 * s + L);
+
+  // Tonspur: Pegelbalken mit Peak-Hold
+  const nBars = Math.max(16, Math.floor((aw - 2 * m) / (7 * s) * 0.45)), bx0 = ax + aw * 0.5 - nBars * 3.5 * s, by = ay + ah * 0.14;
+  for (let i = 0; i < nBars; i++) {
+    const env = Math.sin(i / nBars * Math.PI) ** 0.8;
+    const v = clamp01((0.5 + 0.28 * Math.sin(t * 3.1 + i * 0.7) + 0.22 * Math.sin(t * 5.3 + i * 1.9)) * env);
+    const bh = 4 + v * 40 * s, bxx = bx0 + i * 7 * s;
+    c.fillStyle = `rgba(${G}, ${(0.18 + v * 0.4) * A})`; c.fillRect(bxx, by - bh / 2, 3.2 * s, bh);
+  }
+
+  // Timeline mit Clips, Abspielkopf und Glow
+  const ty = ay + ah - m - 14 * s - 8, tx0 = ax + m + L + 6, tx1 = ax + aw - m - L - 6;
   if (tx1 > tx0 + 40) {
-    c.strokeStyle = `rgba(${G}, ${0.25 * A})`; c.lineWidth = 1;
-    c.beginPath(); c.moveTo(tx0, ty); c.lineTo(tx1, ty); c.stroke();
+    c.strokeStyle = `rgba(${G}, ${0.25 * A})`; c.lineWidth = 1; c.beginPath(); c.moveTo(tx0, ty); c.lineTo(tx1, ty); c.stroke();
     [[0.0, 0.3], [0.34, 0.31], [0.69, 0.31]].forEach(([a0, a1], k) => {
-      c.fillStyle = `rgba(${G}, ${(k === 1 ? 0.22 : 0.12) * A})`;
-      c.fillRect(tx0 + (tx1 - tx0) * a0, ty - 5 * s, (tx1 - tx0) * a1, 10 * s);
+      c.fillStyle = `rgba(${G}, ${(k === 1 ? 0.24 : 0.12) * A})`; c.fillRect(tx0 + (tx1 - tx0) * a0, ty - 5 * s, (tx1 - tx0) * a1, 10 * s);
     });
     const hx = tx0 + (tx1 - tx0) * ((t * 0.12) % 1);
-    c.fillStyle = `rgba(${G}, ${0.8 * A})`; c.fillRect(hx - 1, ty - 11 * s, 2, 22 * s);
+    glowAt(c, G, hx, ty, 16 * s, 0.6 * A);
+    c.fillStyle = `rgba(${G}, ${0.9 * A})`; c.fillRect(hx - 1, ty - 12 * s, 2, 24 * s);
   }
 }
+
+// --- 3. Digitalisierung: Drohne scannt Gelände, Scanfront zieht über das Drahtgitter; Objekt wird von Punktwolke zu Mesh
+const CAR = (() => {                                   // Superellipsoid als Fahrzeugkörper, Gitter u (Umfang) x v (Höhe)
+  const U = 44, V = 17, pts = [], sp = (b, e) => Math.sign(b) * Math.abs(b) ** e;
+  for (let j = 0; j <= V; j++) {
+    const v = -Math.PI / 2 + Math.PI * j / V;
+    for (let i = 0; i < U; i++) {
+      const u = i / U * Math.PI * 2, cv = sp(Math.cos(v), 0.55), sv = sp(Math.sin(v), 0.55);
+      const taper = sv > 0 ? 1 - 0.38 * sv : 1;           // Dach schmaler als Karosserie
+      pts.push([1.0 * sp(Math.cos(u), 0.42) * cv * (sv > 0 ? 0.82 : 1), 0.3 * sv, 0.46 * sp(Math.sin(u), 0.42) * cv * taper]);
+    }
+  }
+  return { U, V, pts };
+})();
 
 function drawScan(c, ax, ay, aw, ah, A, t, o, col) {
-  const s = o.s, G = col.gold;
-  const beamY = ay + ah * ((t * 0.2) % 1);
-  // Punktwolke, leuchtet auf, wo der Scanstrahl vorbeiläuft
-  scanPts.forEach(p => {
-    const x = ax + p.x * aw, y = ay + p.y * ah + Math.sin(t * 0.8 + p.z * 6) * 2 * s;
-    const near = Math.max(0, 1 - Math.abs(y - beamY) / (ah * 0.12));
-    c.fillStyle = `rgba(${G}, ${(0.16 + 0.7 * near) * A})`;
-    c.beginPath(); c.arc(x, y, (1.1 + p.z * 0.9 + near * 1.2) * s, 0, Math.PI * 2); c.fill();
-  });
-  // Scanstrahl
-  const g = c.createLinearGradient(ax, 0, ax + aw, 0);
-  g.addColorStop(0, `rgba(${G}, 0)`); g.addColorStop(0.5, `rgba(${G}, ${0.6 * A})`); g.addColorStop(1, `rgba(${G}, 0)`);
-  c.strokeStyle = g; c.lineWidth = 1.4;
-  c.beginPath(); c.moveTo(ax, beamY); c.lineTo(ax + aw, beamY); c.stroke();
-  // Drehende Drahtgitter-Würfel (3D-Modelle)
-  const spots = [[0.2, 0.3], [0.78, 0.62], [0.45, 0.8], [0.85, 0.2], [0.12, 0.72], [0.55, 0.45]];
-  for (let k = 0; k < o.cubes; k++) {
-    const cx = ax + spots[k][0] * aw, cy = ay + spots[k][1] * ah + Math.sin(t * 0.7 + k) * 6 * s, a = t * 0.6 + k * 1.3, sz = (16 + (k % 3) * 5) * s;
-    const pts = [[-1, -1, -1], [1, -1, -1], [1, 1, -1], [-1, 1, -1], [-1, -1, 1], [1, -1, 1], [1, 1, 1], [-1, 1, 1]].map(([x, y, z]) => {
-      const rx = x * Math.cos(a) - z * Math.sin(a), rz = z * Math.cos(a) + x * Math.sin(a), ry = y * Math.cos(0.5) - rz * Math.sin(0.5);
-      return [cx + rx * sz, cy + ry * sz];
-    });
-    c.strokeStyle = `rgba(${G}, ${0.38 * A})`; c.lineWidth = 1.1;
+  const G = col.gold, S = col.sec, s = Math.max(0.8, Math.min(1.3, Math.min(aw, ah) / 800));
+  c.lineCap = 'round'; c.lineJoin = 'round';
+  const sweep = (t * 0.13) % 1;                           // Tiefenposition der Scanfront (0 = hinten, 1 = vorn)
+
+  // Gelände: perspektivisches Höhenfeld
+  const hy = ay + ah * 0.58, bot = ay + ah * 1.02, R = 22, Cn = 34;
+  const hgt = (u, d) => (Math.sin(u * 9 + d * 4 + t * 0.15) * 0.5 + Math.sin(u * 4.3 - d * 7) * 0.5) * (14 + 26 * d) * s;
+  const at = (u, d) => {
+    const dd = d ** 1.7, sc = 0.2 + 0.8 * dd;
+    return [ax + aw / 2 + (u - 0.5) * aw * 1.9 * sc, hy + (bot - hy) * dd - hgt(u, d) * dd];
+  };
+  const rowD = r => r / R;
+  c.lineWidth = 1;
+  for (let r = 0; r <= R; r++) {                          // Querlinien, Helligkeit nach Tiefe und Nähe zur Scanfront
+    const d = rowD(r), lit = Math.max(0, 1 - Math.abs(d - sweep) / 0.09);
+    c.strokeStyle = `rgba(${G}, ${(0.05 + 0.17 * d + 0.55 * lit) * A})`; c.lineWidth = 0.7 + lit * 1.1;
     c.beginPath();
-    [[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]].forEach(([i, j]) => { c.moveTo(pts[i][0], pts[i][1]); c.lineTo(pts[j][0], pts[j][1]); });
+    for (let i = 0; i <= Cn; i++) { const p = at(i / Cn, d); i ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1]); }
     c.stroke();
   }
-  // Drohne fliegt über das Gelände
-  const dx = ax + aw * (0.5 + 0.38 * Math.sin(t * 0.45)), dy = ay + ah * (0.14 + 0.04 * Math.sin(t * 1.3)), L = 11 * s;
-  c.strokeStyle = `rgba(${G}, ${0.7 * A})`; c.lineWidth = 1.4;
-  c.beginPath(); c.moveTo(dx - L, dy - L * 0.6); c.lineTo(dx + L, dy + L * 0.6); c.moveTo(dx - L, dy + L * 0.6); c.lineTo(dx + L, dy - L * 0.6); c.stroke();
-  [[-1, -0.6], [1, 0.6], [-1, 0.6], [1, -0.6]].forEach(([ux, uy], k) => {
-    const rr = L * 0.5 * (0.8 + 0.2 * Math.sin(t * 30 + k));
-    c.beginPath(); c.ellipse(dx + ux * L, dy + uy * L, rr, rr * 0.35, 0, 0, Math.PI * 2); c.stroke();
-  });
-  c.fillStyle = `rgba(${G}, ${0.8 * A})`; c.beginPath(); c.arc(dx, dy, 2.2 * s, 0, Math.PI * 2); c.fill();
-}
+  c.strokeStyle = `rgba(${G}, ${0.1 * A})`; c.lineWidth = 0.7;
+  for (let i = 0; i <= Cn; i += 2) {                      // Längslinien
+    c.beginPath();
+    for (let r = 0; r <= R; r++) { const p = at(i / Cn, rowD(r)); r ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1]); }
+    c.stroke();
+  }
+  c.globalCompositeOperation = 'lighter';
+  const dsw = sweep, sp0 = at(0.5, dsw);                  // Messpunkte auf der Scanfront
+  for (let i = 0; i <= Cn; i++) { const p = at(i / Cn, dsw); glowAt(c, G, p[0], p[1], 7 * s, 0.5 * A); }
 
-// Leise Variante der Effekte direkt im Hintergrund jeder Kachel
-function drawTileFx() {
-  const home = document.getElementById('view-home');
-  if (!home || !home.classList.contains('active')) return;
-  const col = { gold: isDark ? '212, 175, 55' : '182, 141, 64', sec: isDark ? '245, 245, 247' : '40, 40, 45' };
-  const t = performance.now() / 1000, dpr = Math.min(window.devicePixelRatio || 1, 2);
-  document.querySelectorAll('.tile-fx').forEach(cv => {
-    const w = cv.clientWidth, h = cv.clientHeight;
-    if (!w || !h) return;
-    if (cv.width !== Math.round(w * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); }
-    const c = cv.getContext('2d');
-    c.setTransform(dpr, 0, 0, dpr, 0, 0);
-    c.clearRect(0, 0, w, h);
-    const card = cv.parentElement, hot = card.matches(':hover') || card.classList.contains('in-focus');
-    cv._a = (cv._a === undefined ? 0 : cv._a) + ((hot ? 0.75 : 0.4) - (cv._a || 0)) * 0.08;
-    const type = cv.dataset.fx;
-    if (type === 'neural') drawNeural(c, 0, 0, w, h, cv._a, t, { n: 20, link: 120, rs: 0.8 }, col);
-    if (type === 'media') drawMedia(c, 0, 0, w, h, cv._a, t, { s: 0.7 }, col);
-    if (type === 'scan') drawScan(c, 0, 0, w, h, cv._a, t, { s: 0.75, cubes: 3 }, col);
+  // Drohne über der Scanfront, Kegel zum Boden
+  const dx = ax + aw / 2 + Math.sin(t * 0.6) * aw * 0.3, dd = Math.max(0, Math.min(1, dsw));
+  const g0 = at(0.5 + (dx - (ax + aw / 2)) / (aw * 1.9 * (0.2 + 0.8 * dd ** 1.7)), dsw);
+  const dy = g0[1] - 120 * s - 12 * Math.sin(t * 1.4) * s, Ld = 13 * s;
+  const cone = c.createLinearGradient(0, dy, 0, g0[1]);
+  cone.addColorStop(0, `rgba(${G}, ${0.3 * A})`); cone.addColorStop(1, `rgba(${G}, 0)`);
+  c.fillStyle = cone; c.beginPath(); c.moveTo(dx, dy + 3 * s); c.lineTo(g0[0] - 48 * s, g0[1]); c.lineTo(g0[0] + 48 * s, g0[1]); c.closePath(); c.fill();
+  glowAt(c, G, g0[0], g0[1], 38 * s, 0.7 * A);
+  c.globalCompositeOperation = 'source-over';
+  c.strokeStyle = `rgba(${G}, ${0.85 * A})`; c.lineWidth = 1.6;
+  c.beginPath(); c.moveTo(dx - Ld, dy - Ld * 0.5); c.lineTo(dx + Ld, dy + Ld * 0.5); c.moveTo(dx - Ld, dy + Ld * 0.5); c.lineTo(dx + Ld, dy - Ld * 0.5); c.stroke();
+  [[-1, -0.5], [1, 0.5], [-1, 0.5], [1, -0.5]].forEach(([ux, uy], k) => {
+    const rr = Ld * 0.62, sw = 0.5 + 0.5 * Math.abs(Math.sin(t * 38 + k * 1.6));       // Rotoren: schnelle Unschärfe
+    c.strokeStyle = `rgba(${G}, ${(0.35 + 0.35 * sw) * A})`;
+    c.beginPath(); c.ellipse(dx + ux * Ld, dy + uy * Ld - 2 * s, rr, rr * 0.28, 0, 0, Math.PI * 2); c.stroke();
   });
+  c.fillStyle = `rgba(${G}, ${0.95 * A})`; c.beginPath(); c.arc(dx, dy, 2.8 * s, 0, Math.PI * 2); c.fill();
+
+  // Objekt: Punktwolke -> Mesh, Scanebene wandert von unten nach oben
+  const wide = aw > 900, ocx = ax + aw * (wide ? 0.87 : 0.5), ocy = ay + ah * (wide ? 0.27 : 0.3), sz = Math.min(aw, ah * 1.3) * 0.13;
+  const cyc = (t * 0.17) % 1.5, plane = -0.3 + 0.6 * smooth(clamp01(cyc / 1.0)), fade = 1 - smooth((cyc - 1.2) / 0.3);
+  const yaw = t * 0.45, cyw = Math.cos(yaw), syw = Math.sin(yaw), tilt = 0.32, ct = Math.cos(tilt), st = Math.sin(tilt);
+  const pr = CAR.pts.map(([x, y, z]) => {
+    const rx = x * cyw - z * syw, rz = z * cyw + x * syw, ry = y * ct - rz * st, rz2 = rz * ct + y * st, f = 1 / (1 - rz2 * 0.22);
+    return [ocx + rx * sz * f, ocy - ry * sz * f, y, rz2, f];
+  });
+  glowAt(c, G, ocx, ocy, sz * 1.9, 0.18 * A * fade);
+  // Mesh-Linien (nur wo beide Nachbarn bereits gescannt)
+  c.strokeStyle = `rgba(${G}, ${0.3 * A * fade})`; c.lineWidth = 0.8; c.beginPath();
+  for (let j = 0; j <= CAR.V; j++) for (let i = 0; i < CAR.U; i++) {
+    const a = pr[j * CAR.U + i], b = pr[j * CAR.U + (i + 1) % CAR.U], d = j < CAR.V ? pr[(j + 1) * CAR.U + i] : null;
+    if (a[2] > plane) continue;
+    if (b[2] <= plane) { c.moveTo(a[0], a[1]); c.lineTo(b[0], b[1]); }
+    if (d && d[2] <= plane) { c.moveTo(a[0], a[1]); c.lineTo(d[0], d[1]); }
+  }
+  c.stroke();
+  c.globalCompositeOperation = 'lighter';
+  pr.forEach(p => {                                       // Punkte: ungescannt schwach, gescannt hell, Front glüht
+    const front = Math.max(0, 1 - Math.abs(p[2] - plane) / 0.05), done = p[2] <= plane, back = 0.55 + 0.45 * clamp01((p[3] + 0.5));
+    c.fillStyle = `rgba(${G}, ${((done ? 0.55 : 0.1) * back + front * 0.8) * A * (done ? fade : 1)})`;
+    const r = (done ? 1.5 : 1) * p[4] * s + front * 1.4;
+    c.fillRect(p[0] - r / 2, p[1] - r / 2, r, r);
+  });
+  const py0 = ocy - plane * sz;                  // Scanring um das Objekt
+  c.strokeStyle = `rgba(${G}, ${0.6 * A * fade})`; c.lineWidth = 1.3;
+  c.beginPath(); c.ellipse(ocx, py0, sz * 1.25, sz * 1.25 * st, 0, 0, Math.PI * 2); c.stroke();
+  glowAt(c, G, ocx, py0, sz * 1.3, 0.2 * A * fade);
+  c.globalCompositeOperation = 'source-over';
+  c.fillStyle = `rgba(${S}, ${0.4 * A})`; c.font = `600 ${Math.round(10 * s + 2)}px ui-monospace, monospace`;
+  c.fillText(`SCAN ${String(Math.round(clamp01(cyc / 1.0) * 100)).padStart(3, '0')} %  ·  ${Math.round(CAR.pts.length * clamp01(cyc / 1.0))} PT`, ocx - sz * 1.2, ocy + sz * 1.55);
 }
 
 function renderAmbientBg() {
   if (!bgCanvas || !bgCtx) return;
 
-  const w = bgCanvas.width;
-  const h = bgCanvas.height;
+  const dpr = bgCanvas.width / window.innerWidth;
+  const w = window.innerWidth;
+  const h = window.innerHeight;
+  bgCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
   bgCtx.clearRect(0, 0, w, h);
 
   const maxDiag = Math.hypot(w, h);
@@ -311,14 +389,13 @@ function renderAmbientBg() {
     bgCtx.clip();
 
     const fxCol = { gold: goldRGB, sec: secRGB };
-    if (activeEffect === 'neural') drawNeural(bgCtx, 0, 0, w, h, effectAlpha, bgTime, { n: 44, link: 210, rs: 1 }, fxCol);
-    if (activeEffect === 'media') drawMedia(bgCtx, 0, 0, w, h, effectAlpha, bgTime, { s: 1 }, fxCol);
-    if (activeEffect === 'scan') drawScan(bgCtx, 0, 0, w, h, effectAlpha, bgTime, { s: 1, cubes: 6 }, fxCol);
+    if (activeEffect === 'neural') drawNeural(bgCtx, 0, 0, w, h, effectAlpha, bgTime, {}, fxCol);
+    if (activeEffect === 'media') drawMedia(bgCtx, 0, 0, w, h, effectAlpha, bgTime, {}, fxCol);
+    if (activeEffect === 'scan') drawScan(bgCtx, 0, 0, w, h, effectAlpha, bgTime, {}, fxCol);
 
     bgCtx.restore();
   }
 
-  drawTileFx();
   requestAnimationFrame(renderAmbientBg);
 }
 
@@ -508,7 +585,7 @@ window.addEventListener('popstate', () => showView(viewFromHash()));
 if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
 
 function showView(viewId) {
-  document.title = VIEW_TITLES[viewId] ? VIEW_TITLES[viewId] + ' | digitalwerkstatt Hübner' : BASE_TITLE;
+  document.title = VIEW_TITLES[viewId] ? VIEW_TITLES[viewId] + ' | Digitalisierung Hübner' : BASE_TITLE;
   const loader = document.getElementById('topLoader');
   if (loader) loader.style.opacity = '1';
   deactivateCardBgEffect();
@@ -1071,11 +1148,28 @@ function initCardFocus() {
   window.addEventListener('resize', requestCardFocusUpdate);
 }
 
+// Kacheln: leichte 3D-Neigung und Lichtreflex nach Mausposition (nur mit Maus)
+function initCardTilt() {
+  if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+  document.querySelectorAll('.pillar-card').forEach(card => {
+    card.addEventListener('pointermove', e => {
+      const r = card.getBoundingClientRect(), x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height;
+      card.style.setProperty('--ry', ((x - 0.5) * 7).toFixed(2) + 'deg');
+      card.style.setProperty('--rx', ((0.5 - y) * 5).toFixed(2) + 'deg');
+      card.style.setProperty('--mx', (x * 100).toFixed(1) + '%');
+      card.style.setProperty('--my', (y * 100).toFixed(1) + '%');
+    });
+    card.addEventListener('pointerleave', () => { card.style.setProperty('--rx', '0deg'); card.style.setProperty('--ry', '0deg'); });
+  });
+}
+
 // 9. Initialize App on DOM Ready
 window.addEventListener('DOMContentLoaded', () => {
   initTheme();
   runIntro();
   initCardFocus();
+  initCardTilt();
+  requestCardFocusUpdate();
   initMediaVideos();
   setAmgScope('rohbau');
   resizeBgCanvas();
@@ -1085,7 +1179,7 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 // 8. Digitale Medien: Videos laufen nur sichtbar; Website-Vorschau (diese Seite) lädt erst bei Bedarf, folgt Tag/Nacht und blättert durch die Ansichten
-const TOUR_VIEWS = ['home', 'consulting', 'projektleitung', 'founder'];
+const TOUR_VIEWS = ['home', 'consulting', 'medien', 'projektleitung', 'founder'];
 function previewFrame() { return document.querySelector('.site-preview iframe'); }
 function syncPreviewTheme() {
   const fr = previewFrame();

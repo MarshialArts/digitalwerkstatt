@@ -3,17 +3,17 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>digitalwerkstatt Hübner — KI-Beratung | Digitale Medien | Digitalisierung &amp; Projektleitung</title>
-  <meta name="description" content="Ingenieurskunst trifft digitale Praxis: KI- und C-UAS-Beratung, digitale Medien (UGC, Foto, Video) sowie 3D-Digitalisierung, Drohnen und Automotive-Projektleitung." />
+  <title>Digitalisierung Hübner — KI-Beratung | Digitale Medien | Digitalisierung &amp; Projektleitung</title>
+  <meta name="description" content="Ingenieurskunst trifft digitale Praxis: KI-Beratung, digitale Medien (UGC, Foto, Video) sowie 3D-Digitalisierung, Drohnen und Automotive-Projektleitung." />
 
-  <!-- Dynamic SVG Favicon (Gold/Black 'dw' Badge) -->
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='46' fill='%23111113' stroke='%23D4AF37' stroke-width='6'/><text x='50' y='62' font-family='monospace' font-size='38' font-weight='bold' fill='%23F5F5F7' text-anchor='middle'>dw</text></svg>" />
+  <!-- Dynamic SVG Favicon (Gold/Black 'DH' Badge) -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='46' fill='%23111113' stroke='%23D4AF37' stroke-width='6'/><text x='50' y='62' font-family='monospace' font-size='38' font-weight='bold' fill='%23F5F5F7' text-anchor='middle'>DH</text></svg>" />
 
   <!-- Tailwind CSS (lokal gebaut: Quelle tailwind.config.js, Befehl in docs/tailwind-build.md) -->
   <link rel="stylesheet" href="css/tailwind.css" />
 
   <!-- Eigenes Stylesheet -->
-  <link rel="stylesheet" href="css/styles.css?v=7" />
+  <link rel="stylesheet" href="css/styles.css?v=9" />
 </head>
 <body class="min-h-screen flex flex-col selection:bg-[#D4AF37] selection:text-[#111113]">
 
@@ -36,11 +36,11 @@
               onclick="spawnLogoDrones(event); navigateTo('home')"
               class="flex items-center gap-3 text-left focus:outline-none group relative">
         <div id="dwCircle" class="w-10 h-10 rounded-full bg-[#111113] dark:bg-[#F5F5F7] text-white dark:text-[#111113] flex items-center justify-center font-mono text-xs font-semibold tracking-tighter border-2 border-[#D4AF37] group-hover:scale-110 transition-transform shadow-md">
-          dw
+          DH
         </div>
         <div>
           <span class="font-semibold tracking-tight text-base sm:text-lg block leading-none">
-            digital<span class="text-gold font-normal">werkstatt</span> <span class="font-normal">Hübner</span>
+            Digitalisierung <span class="text-gold font-normal">Hübner</span>
           </span>
           <span class="font-mono text-[10px] text-mut tracking-wider uppercase block mt-0.5">
             AI · Engineering · 3D
@@ -60,7 +60,7 @@
           02. Digitale Medien
         </button>
         <button onclick="navigateTo('projektleitung')" data-nav="projektleitung" class="nav-pill px-4 py-1.5 rounded-full text-xs font-medium transition-all">
-          03. Digitalisierung & Projekt
+          03. Digitalisierung<span class="hidden xl:inline"> & Projektleitung</span>
         </button>
         <button onclick="navigateTo('founder')" data-nav="founder" class="nav-pill px-4 py-1.5 rounded-full text-xs font-medium transition-all">
           Profil & Kontakt
@@ -123,9 +123,6 @@
             <span class="text-gold">digitale Praxis.</span>
           </h1>
 
-          <p class="text-sec text-base sm:text-lg leading-relaxed max-w-xl mx-auto">
-            Praxisnahe <strong>KI- und C-UAS-Beratung</strong>, <strong>digitale Medien</strong> sowie <strong>Digitalisierung und Projektleitung</strong>.
-          </p>
 
           <div class="flex flex-wrap items-center justify-center gap-3 pt-2">
             <button onclick="navigateTo('founder')" class="px-6 py-3 btn-primary text-sm font-medium">
@@ -145,7 +142,6 @@
                onmouseenter="activateCardBgEffect('neural', this)"
                onmouseleave="deactivateCardBgEffect()"
                class="ios-card pillar-card p-7 flex flex-col justify-between cursor-pointer group">
-            <canvas class="tile-fx" data-fx="neural" aria-hidden="true"></canvas>
             <div>
               <div class="flex items-center justify-between mb-6">
                 <span class="font-mono text-xs font-semibold text-gold">01 // KI-BERATUNG</span>
@@ -158,7 +154,7 @@
 
               <h2 class="text-2xl font-bold mb-1.5">Beratung</h2>
               <p class="text-sm font-semibold text-gold mb-4 leading-snug">
-                Ich zeige dir, wie du KI im Privatleben und als Unternehmer nutzen kannst. Dazu C-UAS-Fachberatung.
+                Ich zeige dir, wie du KI im Privatleben und als Unternehmer nutzen kannst.
               </p>
               <ol class="space-y-1.5 mb-6 text-sm text-sec">
                 <li class="flex gap-3"><span class="font-mono text-xs font-bold text-gold pt-0.5">01</span><span>Gratis-Call</span></li>
@@ -180,7 +176,6 @@
                onmouseenter="activateCardBgEffect('media', this)"
                onmouseleave="deactivateCardBgEffect()"
                class="ios-card pillar-card p-7 flex flex-col justify-between cursor-pointer group">
-            <canvas class="tile-fx" data-fx="media" aria-hidden="true"></canvas>
             <div>
               <div class="flex items-center justify-between mb-6">
                 <span class="font-mono text-xs font-semibold text-gold">02 // DIGITALE MEDIEN</span>
@@ -211,10 +206,9 @@
                onmouseenter="activateCardBgEffect('scan', this)"
                onmouseleave="deactivateCardBgEffect()"
                class="ios-card pillar-card p-7 flex flex-col justify-between cursor-pointer group">
-            <canvas class="tile-fx" data-fx="scan" aria-hidden="true"></canvas>
             <div>
               <div class="flex items-center justify-between mb-6">
-                <span class="font-mono text-xs font-semibold text-gold">03 // DIGITALISIERUNG &amp; PROJEKT</span>
+                <span class="font-mono text-xs font-semibold text-gold">03 // DIGITALISIERUNG &amp; PROJEKTLEITUNG</span>
                 <div class="pillar-icon w-11 h-11 rounded-2xl ios-solid flex items-center justify-center transition-all">
                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5M14 4l-2-1-2 1M4 7l2-1M4 7l2 1M4 7v2.5M12 21l-2-1m2 1l2-1m-2 1v-2.5M6 18l-2-1v-2.5M18 18l2-1v-2.5"/>
@@ -222,7 +216,7 @@
                 </div>
               </div>
 
-              <h2 class="text-2xl font-bold mb-1.5">Digitalisierung und Projektleitung</h2>
+              <h2 class="text-2xl font-bold mb-1.5">Digitalisierung &amp; Projektleitung</h2>
               <p class="text-sm font-semibold text-gold mb-6 leading-snug">
                 3D-Digitalisierung, Drohnen und Automotive-Projektleitung.
               </p>
@@ -374,15 +368,16 @@
                   <text x="280" y="82" class="art-label" text-anchor="middle">Ergebnis</text>
                 </svg>
                 <div>
-                  <h3 class="text-2xl font-bold">Bedarfsanalyse &amp; Coaching</h3>
+                  <h3 class="text-2xl font-bold">Individuelles Coaching</h3>
                   <p class="text-sm text-sec mt-1">Du lernst genau das, was du brauchst. 1:1 und auf deinen Fall zugeschnitten.</p>
                 </div>
                 <ul class="space-y-2.5 text-sm">
-                <li class="flex gap-3 items-start"><svg class="w-4 h-4 mt-0.5 text-gold shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" d="M5 13l4 4L19 7"/></svg><span>Individuelles Coaching</span></li>
-                <li class="flex gap-3 items-start"><svg class="w-4 h-4 mt-0.5 text-gold shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" d="M5 13l4 4L19 7"/></svg><span>Prompts &amp; Vorlagen</span></li>
-                <li class="flex gap-3 items-start"><svg class="w-4 h-4 mt-0.5 text-gold shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" d="M5 13l4 4L19 7"/></svg><span>Tools &amp; Workflows</span></li>
                 <li class="flex gap-3 items-start"><svg class="w-4 h-4 mt-0.5 text-gold shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" d="M5 13l4 4L19 7"/></svg><span>KI-Grundlagen</span></li>
+                <li class="flex gap-3 items-start"><svg class="w-4 h-4 mt-0.5 text-gold shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" d="M5 13l4 4L19 7"/></svg><span>KI-Sicherheit</span></li>
+                <li class="flex gap-3 items-start"><svg class="w-4 h-4 mt-0.5 text-gold shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" d="M5 13l4 4L19 7"/></svg><span>Tools &amp; Workflows</span></li>
                 <li class="flex gap-3 items-start"><svg class="w-4 h-4 mt-0.5 text-gold shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" d="M5 13l4 4L19 7"/></svg><span>Foto- &amp; Videoerstellung mit KI</span></li>
+                <li class="flex gap-3 items-start"><svg class="w-4 h-4 mt-0.5 text-gold shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" d="M5 13l4 4L19 7"/></svg><span>Automatisierungen &amp; Agenten</span></li>
+                <li class="flex gap-3 items-start"><svg class="w-4 h-4 mt-0.5 text-gold shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" d="M5 13l4 4L19 7"/></svg><span>u.&nbsp;v.&nbsp;m.</span></li>
                 </ul>
                 <div class="mt-auto pt-2 flex flex-wrap gap-2">
                   <span class="px-3 py-1 ios-pill font-mono text-[11px] font-semibold border border-[#D4AF37]/40">1:1</span>
@@ -421,34 +416,6 @@
                 </div>
               </article>
 
-              <article class="topic-card ios-solid p-6 flex flex-col gap-5 md:col-span-2">
-                <svg class="topic-art w-full h-24" viewBox="0 0 320 96" role="img" aria-label="Drohne wird erkannt und abgewehrt">
-                  <line x1="56" y1="44" x2="138" y2="44" class="art-flow"/>
-                  <line x1="182" y1="44" x2="264" y2="44" class="art-flow"/>
-                  <g class="art-node"><circle cx="40" cy="44" r="16"/><path d="M32 44h16M40 36v16" fill="none"/></g>
-                  <g class="art-node art-node-main"><circle cx="160" cy="44" r="22"/><text x="160" y="49" text-anchor="middle">C-UAS</text></g>
-                  <g class="art-node"><circle cx="280" cy="44" r="16"/><path d="M272 44l6 6 11-12" fill="none"/></g>
-                  <circle r="3.5" class="art-dot"><animateMotion dur="2.8s" repeatCount="indefinite" path="M56 44 H264"/></circle>
-                  <text x="40" y="82" class="art-label" text-anchor="middle">Bedrohung</text>
-                  <text x="160" y="82" class="art-label" text-anchor="middle">Abwehrkonzept</text>
-                  <text x="280" y="82" class="art-label" text-anchor="middle">Sicherheit</text>
-                </svg>
-                <div>
-                  <h3 class="text-2xl font-bold">C-UAS &amp; Drohnenabwehr</h3>
-                  <p class="text-sm text-sec mt-1">Fachberatung zu Counter-UAS-Systemen und Luftraumsicherheit, basierend auf über 7 Jahren Erfahrung mit Drohnen und C-UAS.</p>
-                </div>
-                <ul class="space-y-2.5 text-sm">
-                <li class="flex gap-3 items-start"><svg class="w-4 h-4 mt-0.5 text-gold shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" d="M5 13l4 4L19 7"/></svg><span>Einordnung von Bedrohungslage und Anforderungen</span></li>
-                <li class="flex gap-3 items-start"><svg class="w-4 h-4 mt-0.5 text-gold shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" d="M5 13l4 4L19 7"/></svg><span>Bewertung und Auswahl von C-UAS-Lösungen</span></li>
-                <li class="flex gap-3 items-start"><svg class="w-4 h-4 mt-0.5 text-gold shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" d="M5 13l4 4L19 7"/></svg><span>Technisches Konzept und Systemintegration (beratend)</span></li>
-                <li class="flex gap-3 items-start"><svg class="w-4 h-4 mt-0.5 text-gold shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" d="M5 13l4 4L19 7"/></svg><span>Unterstützung bei Ausschreibung und Dokumentation</span></li>
-                </ul>
-                <div class="mt-auto pt-2 flex flex-wrap gap-2">
-                  <span class="px-3 py-1 ios-pill font-mono text-[11px] font-semibold border border-[#D4AF37]/40">Beratung, keine Projektleitung</span>
-                  <span class="px-3 py-1 ios-pill font-mono text-[11px] font-semibold border border-[#D4AF37]/40">Video-Call oder vor Ort</span>
-                </div>
-              </article>
-
             </div>
 
             <div class="pt-6 flex flex-col sm:flex-row gap-3">
@@ -465,11 +432,11 @@
       <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-20">
         <div class="flex items-center justify-between mb-8">
           <button onclick="navigateTo('home')" class="ios-solid px-4 py-2 rounded-full text-xs font-mono hover:border-[#D4AF37]">← Zurück</button>
-          <span class="font-mono text-xs text-gold font-semibold">03 // DIGITALISIERUNG &amp; PROJEKT</span>
+          <span class="font-mono text-xs text-gold font-semibold">03 // DIGITALISIERUNG &amp; PROJEKTLEITUNG</span>
         </div>
 
         <div class="max-w-3xl mb-8 space-y-2">
-          <h1 class="text-3xl sm:text-5xl font-bold tracking-tight">Digitalisierung und Projektleitung.</h1>
+          <h1 class="text-3xl sm:text-5xl font-bold tracking-tight">Digitalisierung &amp; Projektleitung.</h1>
           <p class="text-sec text-base">
             <strong>3D-Digitalisierung</strong> und <strong>Drohnen-Scans</strong> sowie 10 Jahre internationale <strong>Automotive-Projektleitung</strong> in Rohbau (inkl. Großguss) und Gesamtfahrzeug.
           </p>
@@ -629,7 +596,7 @@
               <div class="flex flex-col sm:flex-row gap-5 items-center sm:items-start">
               <img src="img/profil-beispiel.svg" alt="Beispielfoto Marcel Hübner" width="160" height="160" class="w-32 h-32 sm:w-40 sm:h-40 rounded-3xl object-cover shrink-0 border border-white/10" />
               <p class="text-sm sm:text-base text-sec leading-relaxed">
-                Hinter <strong>digitalwerkstatt Hübner</strong> stehen ein Ingenieurstudium mit zwei Master-Abschlüssen, zehn Jahre Erfahrung in der internationalen Automobilindustrie sowie Erfahrung mit Drohnen- und C-UAS-Projekten. EU-Drohnenführerschein. Zertifizierte Weiterbildung zum AI-Manager (IU Akademie).
+                Hinter <strong>Digitalisierung Hübner</strong> stehen ein Ingenieurstudium mit zwei Master-Abschlüssen, zehn Jahre Erfahrung in der internationalen Automobilindustrie sowie Erfahrung mit Drohnen- und C-UAS-Projekten. EU-Drohnenführerschein. Zertifizierte Weiterbildung zum AI-Manager (IU Akademie).
               </p>
               </div>
               <div class="grid sm:grid-cols-2 gap-3 pt-2">
@@ -679,7 +646,7 @@
               <textarea id="contactMsg" name="nachricht" rows="3" required placeholder="Kurze Projektskizze, Zielsetzung oder Wunschtermin für den Gratis-Call..." class="w-full px-4 py-3 ios-solid text-sm focus:outline-none focus:border-[#D4AF37]"></textarea>
 
               <p class="text-[11px] text-mut leading-snug">
-                Mit dem Absenden werden Ihre Angaben über den Dienst Formspree (USA) an mich übermittelt. Hinweise in der <button type="button" onclick="navigateTo('datenschutz')" class="text-gold underline">Datenschutzerklärung</button> einverstanden.
+                Mit dem Absenden werden deine Angaben über den Dienst Formspree (USA) an mich übermittelt. Hinweise findest du in der <button type="button" onclick="navigateTo('datenschutz')" class="text-gold underline">Datenschutzerklärung</button>.
               </p>
 
               <div id="formLoader" class="hidden p-3.5 rounded-2xl bg-[#7C3AED]/10 border border-[#7C3AED]/30 space-y-2">
@@ -697,7 +664,7 @@
               </div>
 
               <div id="formDone" class="hidden p-3.5 rounded-2xl ios-solid border-[#D4AF37] font-mono text-xs text-gold font-semibold">
-                ✓ Vielen Dank! Ihre Anfrage wurde versendet.
+                ✓ Vielen Dank! Deine Anfrage wurde versendet.
               </div>
 
               <button id="formBtn" type="submit" class="w-full py-3.5 btn-gold text-sm">Projektanfrage absenden</button>
@@ -719,7 +686,7 @@
           <h1 class="text-3xl font-bold tracking-tight">Impressum</h1>
           <div class="space-y-1">
             <h2 class="font-mono text-xs text-gold font-semibold uppercase">Angaben gemäß § 5 Digitale-Dienste-Gesetz (DDG)</h2>
-            <p class="font-semibold text-base">digitalwerkstatt Hübner</p>
+            <p class="font-semibold text-base">Digitalisierung Hübner</p>
             <p class="text-sec">Inhaber: Marcel Hübner (Einzelunternehmen)</p>
             <p class="text-sec">[Straße und Hausnummer eintragen]</p>
             <p class="text-sec">[PLZ und Ort eintragen, Deutschland]</p>
@@ -768,7 +735,7 @@
 
           <div class="space-y-2">
             <h2 class="font-mono text-xs text-gold font-semibold uppercase">1. Verantwortlicher</h2>
-            <p class="text-sec">Verantwortlicher im Sinne der DSGVO ist: <strong>digitalwerkstatt Hübner – Marcel Hübner</strong> (Kontaktdaten siehe <button onclick="navigateTo('impressum')" class="text-gold underline">Impressum</button>).</p>
+            <p class="text-sec">Verantwortlicher im Sinne der DSGVO ist: <strong>Digitalisierung Hübner – Marcel Hübner</strong> (Kontaktdaten siehe <button onclick="navigateTo('impressum')" class="text-gold underline">Impressum</button>).</p>
           </div>
 
           <div class="space-y-2">
@@ -778,17 +745,17 @@
 
           <div class="space-y-2">
             <h2 class="font-mono text-xs text-gold font-semibold uppercase">3. Kontaktformular & Projektanfragen</h2>
-            <p class="text-sec">Das Kontaktformular wird über den Dienst Formspree (Formspree, Inc., USA) betrieben. Beim Absenden werden Name, E-Mail-Adresse, Thema, Nachricht sowie technische Verbindungsdaten (u. a. IP-Adresse) an Formspree übermittelt und von dort als E-Mail an mich weitergeleitet; Formspree speichert die Einsendungen für den Abruf im Konto. Grundlage ist Art. 6 Abs. 1 lit. b DSGVO (Anfrage), die Übermittlung in die USA stützt sich auf Standardvertragsklauseln bzw. das EU-US Data Privacy Framework* [Vertrag zur Auftragsverarbeitung mit Formspree abschließen und prüfen]. Anfragen per E-Mail werden zur Bearbeitung verarbeitet (Art. 6 Abs. 1 lit. b bzw. f DSGVO) und gelöscht, sobald sie erledigt sind und keine gesetzlichen Aufbewahrungspflichten bestehen (z. B. 6 bzw. 8 Jahre bei Geschäftsbriefen/Buchungsbelegen*). Keine Weitergabe an weitere Dritte außer Ihrem und meinem E-Mail-Anbieter. [E-Mail-Anbieter und AVV eintragen.]</p>
+            <p class="text-sec">Das Kontaktformular wird über den Dienst Formspree (Formspree, Inc., USA) betrieben. Beim Absenden werden Name, E-Mail-Adresse, Thema, Nachricht sowie technische Verbindungsdaten (u. a. IP-Adresse) an Formspree übermittelt und von dort als E-Mail an mich weitergeleitet; Formspree speichert die Einsendungen für den Abruf im Konto. Grundlage ist Art. 6 Abs. 1 lit. b DSGVO (Anfrage), die Übermittlung in die USA stützt sich auf Standardvertragsklauseln bzw. das EU-US Data Privacy Framework* [Vertrag zur Auftragsverarbeitung mit Formspree abschließen und prüfen]. Anfragen per E-Mail werden zur Bearbeitung verarbeitet (Art. 6 Abs. 1 lit. b bzw. f DSGVO) und gelöscht, sobald sie erledigt sind und keine gesetzlichen Aufbewahrungspflichten bestehen (z. B. 6 bzw. 8 Jahre bei Geschäftsbriefen/Buchungsbelegen*). Keine Weitergabe an weitere Dritte außer deinem und meinem E-Mail-Anbieter. [E-Mail-Anbieter und AVV eintragen.]</p>
           </div>
 
           <div class="space-y-2">
             <h2 class="font-mono text-xs text-gold font-semibold uppercase">4. Externe Links</h2>
-            <p class="text-sec">Diese Seite verlinkt auf externe Websites (z. B. einfy.de). Beim Klick verlassen Sie diese Seite; für die dortige Datenverarbeitung ist der jeweilige Betreiber verantwortlich.</p>
+            <p class="text-sec">Diese Seite verlinkt auf externe Websites (z. B. einfy.de). Beim Klick verlässt du diese Seite; für die dortige Datenverarbeitung ist der jeweilige Betreiber verantwortlich.</p>
           </div>
 
           <div class="space-y-2">
             <h2 class="font-mono text-xs text-gold font-semibold uppercase">5. Ihre Betroffenenrechte</h2>
-            <p class="text-sec">Sie haben jederzeit das Recht auf Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung, Datenübertragbarkeit sowie Widerspruch (Art. 15–21 DSGVO) und ein Beschwerderecht bei einer Datenschutz-Aufsichtsbehörde (Art. 77 DSGVO), z. B. der für meinen Wohnsitz zuständigen Landesbehörde [Behörde Ihres Bundeslandes eintragen]. Eine erteilte Einwilligung können Sie jederzeit mit Wirkung für die Zukunft widerrufen.</p>
+            <p class="text-sec">Du hast jederzeit das Recht auf Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung, Datenübertragbarkeit sowie Widerspruch (Art. 15–21 DSGVO) und ein Beschwerderecht bei einer Datenschutz-Aufsichtsbehörde (Art. 77 DSGVO), z. B. der für meinen Wohnsitz zuständigen Landesbehörde [Behörde deines Bundeslandes eintragen]. Eine erteilte Einwilligung kannst du jederzeit mit Wirkung für die Zukunft widerrufen.</p>
           </div>
         </div>
       </div>
@@ -799,7 +766,7 @@
   <footer class="mt-auto py-8 px-4 sm:px-6 lg:px-8 border-t border-hair relative z-10 bg-white/40 dark:bg-black/20 backdrop-blur-md">
     <div class="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-xs font-mono text-mut">
       <div class="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 text-center sm:text-left">
-        <span><strong class="text-current">digitalwerkstatt Hübner</strong> — KI-Beratung · Digitale Medien · Digitalisierung &amp; Projektleitung</span>
+        <span><strong class="text-current">Digitalisierung Hübner</strong> — KI-Beratung · Digitale Medien · Digitalisierung &amp; Projektleitung</span>
         <span class="px-2.5 py-0.5 rounded-full ios-pill text-[10px] text-gold">Kein Cookie-Tracking</span>
       </div>
       <div class="flex flex-wrap items-center justify-center gap-5">
@@ -812,6 +779,6 @@
   </footer>
 
   <!-- Ausgelagerte Anwendungslogik -->
-  <script src="js/app.js?v=8"></script>
+  <script src="js/app.js?v=10"></script>
 </body>
 </html>
